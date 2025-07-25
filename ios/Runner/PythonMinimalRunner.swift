@@ -2,19 +2,22 @@ import Foundation
 
 @objc class PythonMinimalRunner: NSObject {
     
-    @objc static func addOneAndOne() -> NSNumber? {
-        print("🔍 PythonMinimalRunner: Starting subprocess call")
-        
-        // For iOS, we'll use a simple approach - just return 2 for now
-        // In production, we'd embed a Python executable or use a different approach
-        print("🔍 iOS: Using fallback implementation")
-        print("✅ Successfully got result: 2")
-        return NSNumber(value: 2)
-        
-        // Note: Process/NSTask is not available on iOS
-        // For production, we'd need to:
-        // 1. Embed a Python executable in the app bundle
-        // 2. Use a different approach like Python C API
-        // 3. Or use a pre-compiled Python script
-    }
+                  @objc static func addOneAndOne() -> NSNumber? {
+           print("🔍 PythonMinimalRunner: Starting embedded Python simulation")
+           
+           // For now, simulate the Python call since Process is not available on iOS
+           // In production, we'll use the embedded Python executable
+           print("🔍 iOS: Using fallback implementation (1+1=2)")
+           
+           // Simulate the Python script result
+           let result = 2
+           print("✅ Successfully got result: \(result)")
+           return NSNumber(value: result)
+           
+           // TODO: When embedded Python is added:
+           // 1. Download Python interpreter for iOS
+           // 2. Add to app bundle
+           // 3. Use posix_spawn or similar for subprocess calls
+           // 4. Test on actual iOS device
+       }
 }

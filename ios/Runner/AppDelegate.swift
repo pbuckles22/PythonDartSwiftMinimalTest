@@ -7,16 +7,17 @@ import Flutter
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    let controller : FlutterViewController = window?.rootViewController as! FlutterViewController
-    let pythonChannel = FlutterMethodChannel(name: "python/minimal",
-                                             binaryMessenger: controller.binaryMessenger)
+               let controller : FlutterViewController = window?.rootViewController as! FlutterViewController
+           let pythonChannel = FlutterMethodChannel(name: "python/minimal",
+                                                    binaryMessenger: controller.binaryMessenger)
 
-    pythonChannel.setMethodCallHandler({
-      (call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
-      print("🔔 Swift: MethodChannel received call: \(call.method)")
-      if call.method == "addOneAndOne" {
-        print("🔔 Swift: Calling PythonMinimalRunner.addOneAndOne()")
-        let value = PythonMinimalRunner.addOneAndOne()
+           pythonChannel.setMethodCallHandler({
+             (call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
+             print("🔔 Swift: MethodChannel received call: \(call.method)")
+             if call.method == "addOneAndOne" {
+               print("🔔 Swift: Calling PythonMinimalRunner.addOneAndOne()")
+               
+               let value = PythonMinimalRunner.addOneAndOne()
         print("🔔 Swift: PythonMinimalRunner returned: \(String(describing: value))")
         if let value = value {
           print("🔔 Swift: Sending result back to Flutter: \(value)")
