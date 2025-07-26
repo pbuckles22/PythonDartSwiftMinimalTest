@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.0",
+  "base_prefix": "/Users/runner/work/Python-Apple-support/Python-Apple-support/install/iOS/iphonesimulator.x86_64/python-3.14.0b2",
+  "base_interpreter": "/Users/runner/work/Python-Apple-support/Python-Apple-support/install/iOS/iphonesimulator.x86_64/python-3.14.0b2/bin/python3.14",
+  "platform": "ios-13.0-x86_64-iphonesimulator",
+  "language": {
+    "version": "3.14",
+    "version_info": {
+      "major": 3,
+      "minor": 14,
+      "micro": 0,
+      "releaselevel": "beta",
+      "serial": 2
+    }
+  },
+  "implementation": {
+    "name": "cpython",
+    "cache_tag": "cpython-314",
+    "version": {
+      "major": 3,
+      "minor": 14,
+      "micro": 0,
+      "releaselevel": "beta",
+      "serial": 2
+    },
+    "hexversion": 51249330,
+    "_multiarch": "x86_64-iphonesimulator"
+  },
+  "abi": {
+    "flags": [],
+    "extension_suffix": ".cpython-314-iphonesimulator.so",
+    "stable_abi_suffix": ".abi3.so"
+  },
+  "suffixes": {
+    "source": [
+      ".py"
+    ],
+    "bytecode": [
+      ".pyc"
+    ],
+    "extensions": [
+      ".cpython-314-darwin.so",
+      ".abi3.so",
+      ".so"
+    ]
+  },
+  "libpython": {
+    "dynamic": "/Users/runner/work/Python-Apple-support/Python-Apple-support/install/iOS/iphonesimulator.x86_64/python-3.14.0b2/lib/Python.framework/Python",
+    "link_extensions": false,
+    "static": "/Users/runner/work/Python-Apple-support/Python-Apple-support/install/iOS/iphonesimulator.x86_64/python-3.14.0b2/lib/libpython3.14.a"
+  },
+  "c_api": {
+    "headers": "/Users/runner/work/Python-Apple-support/Python-Apple-support/install/iOS/iphonesimulator.x86_64/python-3.14.0b2/include",
+    "pkgconfig_path": "/Users/runner/work/Python-Apple-support/Python-Apple-support/install/iOS/iphonesimulator.x86_64/python-3.14.0b2/lib/pkgconfig"
+  }
+}

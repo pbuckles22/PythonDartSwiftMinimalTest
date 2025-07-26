@@ -1,0 +1,9 @@
+set -e
+echo "Signing embedded Python modules..."
+if [ -d "$CODESIGNING_FOLDER_PATH/python-stdlib/lib-dynload" ]; then
+    find "$CODESIGNING_FOLDER_PATH/python-stdlib/lib-dynload" -name "*.so" -exec /usr/bin/codesign --force --sign "$EXPANDED_CODE_SIGN_IDENTITY" --timestamp=none --preserve-metadata=identifier,entitlements,flags {} \;
+    echo "✅ Python modules signed successfully"
+else
+    echo "⚠️  python-stdlib/lib-dynload not found in app bundle - skipping code signing"
+    echo "   This is normal if python-stdlib is not properly added to Copy Bundle Resources"
+fi 

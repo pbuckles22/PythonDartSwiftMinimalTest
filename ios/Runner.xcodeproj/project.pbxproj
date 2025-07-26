@@ -15,6 +15,11 @@
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
 		C4BA7B5D2E34180C00E9908A /* PythonMinimalRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4BA7B5C2E34180C00E9908A /* PythonMinimalRunner.swift */; };
+		C4E99B772E345C4D00F7E9B7 /* PythonKit in Frameworks */ = {isa = PBXBuildFile; productRef = C4E99B762E345C4D00F7E9B7 /* PythonKit */; };
+		C4E9AF612E345CB200F7E9B7 /* Python.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = C4E99B782E345C7900F7E9B7 /* Python.xcframework */; };
+		C4E9AF622E345CB200F7E9B7 /* Python.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C4E99B782E345C7900F7E9B7 /* Python.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		C4E9D7322E34B81E00F7E9B7 /* python-stdlib in Resources */ = {isa = PBXBuildFile; fileRef = C4E9D7312E34B81E00F7E9B7 /* python-stdlib */; };
+		C4E9D7342E34C35B00F7E9B7 /* minimal.py in Resources */ = {isa = PBXBuildFile; fileRef = C4E9D7332E34C35B00F7E9B7 /* minimal.py */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,6 +39,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				C4E9AF622E345CB200F7E9B7 /* Python.xcframework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -57,6 +63,9 @@
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C4BA7B5C2E34180C00E9908A /* PythonMinimalRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PythonMinimalRunner.swift; sourceTree = "<group>"; };
+		C4E99B782E345C7900F7E9B7 /* Python.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = Python.xcframework; sourceTree = SOURCE_ROOT; };
+		C4E9D7312E34B81E00F7E9B7 /* python-stdlib */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "python-stdlib"; sourceTree = "<group>"; };
+		C4E9D7332E34C35B00F7E9B7 /* minimal.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = minimal.py; path = Resources/minimal.py; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -64,6 +73,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C4E99B772E345C4D00F7E9B7 /* PythonKit in Frameworks */,
+				C4E9AF612E345CB200F7E9B7 /* Python.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -92,6 +103,7 @@
 		97C146E51CF9000F007C117D = {
 			isa = PBXGroup;
 			children = (
+				C4E9D7312E34B81E00F7E9B7 /* python-stdlib */,
 				9740EEB11CF90186004384FC /* Flutter */,
 				97C146F01CF9000F007C117D /* Runner */,
 				97C146EF1CF9000F007C117D /* Products */,
@@ -111,6 +123,8 @@
 		97C146F01CF9000F007C117D /* Runner */ = {
 			isa = PBXGroup;
 			children = (
+				C4E9D7332E34C35B00F7E9B7 /* minimal.py */,
+				C4E99B782E345C7900F7E9B7 /* Python.xcframework */,
 				C4BA7B5C2E34180C00E9908A /* PythonMinimalRunner.swift */,
 				97C146FA1CF9000F007C117D /* Main.storyboard */,
 				97C146FD1CF9000F007C117D /* Assets.xcassets */,
@@ -151,6 +165,7 @@
 				9740EEB61CF901F6004384FC /* Run Script */,
 				97C146EA1CF9000F007C117D /* Sources */,
 				97C146EB1CF9000F007C117D /* Frameworks */,
+				C4E9AF632E345E3100F7E9B7 /* Sign Embedded Python Modules */,
 				97C146EC1CF9000F007C117D /* Resources */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
@@ -193,6 +208,9 @@
 				Base,
 			);
 			mainGroup = 97C146E51CF9000F007C117D;
+			packageReferences = (
+				C4E99B752E345C4D00F7E9B7 /* XCRemoteSwiftPackageReference "PythonKit" */,
+			);
 			productRefGroup = 97C146EF1CF9000F007C117D /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -215,7 +233,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C4E9D7322E34B81E00F7E9B7 /* python-stdlib in Resources */,
 				97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */,
+				C4E9D7342E34C35B00F7E9B7 /* minimal.py in Resources */,
 				3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */,
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
@@ -255,6 +275,24 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" build";
+		};
+		C4E9AF632E345E3100F7E9B7 /* Sign Embedded Python Modules */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Sign Embedded Python Modules";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\necho \"Signing embedded Python modules...\"\nif [ -d \"$CODESIGNING_FOLDER_PATH/python-stdlib/lib-dynload\" ]; then\n    find \"$CODESIGNING_FOLDER_PATH/python-stdlib/lib-dynload\" -name \"*.so\" -exec /usr/bin/codesign --force --sign \"$EXPANDED_CODE_SIGN_IDENTITY\" --timestamp=none --preserve-metadata=identifier,entitlements,flags {} \\;\n    echo \"✅ Python modules signed successfully\"\nelse\n    echo \"⚠️  python-stdlib/lib-dynload not found in app bundle - skipping code signing\"\n    echo \"   This is normal if python-stdlib is not properly added to Copy Bundle Resources\"\nfi \n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -331,6 +369,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -368,11 +407,26 @@
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = 45V4QAJ329;
 				ENABLE_BITCODE = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				INFOPLIST_FILE = Runner/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TestPython;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.trivia-games";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Runner/Resources/python/lib/python3.14/lib-dynload",
+					"$(PROJECT_DIR)/Runner/Resources/python_embedded/lib/python3.14/lib-dynload",
+					"$(PROJECT_DIR)/Runner/Resources/python_embedded",
+					"$(PROJECT_DIR)/Runner/Resources",
+					"$(PROJECT_DIR)/python-stdlib/lib-dynload",
+				);
+				MARKETING_VERSION = 1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.pythonFlutterEmbedDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
@@ -452,6 +506,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -509,6 +564,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -548,11 +604,26 @@
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = 45V4QAJ329;
 				ENABLE_BITCODE = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				INFOPLIST_FILE = Runner/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TestPython;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.trivia-games";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Runner/Resources/python/lib/python3.14/lib-dynload",
+					"$(PROJECT_DIR)/Runner/Resources/python_embedded/lib/python3.14/lib-dynload",
+					"$(PROJECT_DIR)/Runner/Resources/python_embedded",
+					"$(PROJECT_DIR)/Runner/Resources",
+					"$(PROJECT_DIR)/python-stdlib/lib-dynload",
+				);
+				MARKETING_VERSION = 1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.pythonFlutterEmbedDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
@@ -571,11 +642,26 @@
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = 45V4QAJ329;
 				ENABLE_BITCODE = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				INFOPLIST_FILE = Runner/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TestPython;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.trivia-games";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Runner/Resources/python/lib/python3.14/lib-dynload",
+					"$(PROJECT_DIR)/Runner/Resources/python_embedded/lib/python3.14/lib-dynload",
+					"$(PROJECT_DIR)/Runner/Resources/python_embedded",
+					"$(PROJECT_DIR)/Runner/Resources",
+					"$(PROJECT_DIR)/python-stdlib/lib-dynload",
+				);
+				MARKETING_VERSION = 1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.pythonFlutterEmbedDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
@@ -618,6 +704,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C4E99B752E345C4D00F7E9B7 /* XCRemoteSwiftPackageReference "PythonKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pvieito/PythonKit.git";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C4E99B762E345C4D00F7E9B7 /* PythonKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C4E99B752E345C4D00F7E9B7 /* XCRemoteSwiftPackageReference "PythonKit" */;
+			productName = PythonKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 97C146E61CF9000F007C117D /* Project object */;
 }
