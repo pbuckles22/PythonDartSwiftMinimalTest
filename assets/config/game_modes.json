@@ -1,0 +1,76 @@
+{
+  "game_modes": [
+    {
+      "id": "easy",
+      "name": "Easy",
+      "rows": 9,
+      "columns": 9,
+      "mines": 10,
+      "enabled": true,
+      "icon": "sentiment_satisfied"
+    },
+    {
+      "id": "normal",
+      "name": "Normal", 
+      "rows": 16,
+      "columns": 16,
+      "mines": 40,
+      "enabled": true,
+      "icon": "sentiment_neutral"
+    },
+    {
+      "id": "hard",
+      "name": "Hard",
+      "rows": 16,
+      "columns": 30,
+      "mines": 99,
+      "enabled": true,
+      "icon": "sentiment_dissatisfied"
+    },
+    {
+      "id": "expert",
+      "name": "Expert",
+      "description": "18×24 grid, 115 mines",
+      "rows": 18,
+      "columns": 24,
+      "mines": 115,
+      "enabled": true,
+      "icon": "warning"
+    },
+    {
+      "id": "custom",
+      "name": "Custom",
+      "description": "Custom grid size and mine count",
+      "rows": 18,
+      "columns": 10,
+      "mines": 0,
+      "enabled": false,
+      "icon": "settings"
+    }
+  ],
+  "defaults": {
+    "game_mode": "hard",
+    "features": {
+      "kickstarter_mode": true,
+      "5050_detection": true,
+      "5050_safe_move": true,
+      "game_statistics": true,
+      "board_reset": false,
+      "custom_difficulty": false,
+      "undo_move": false,
+      "hint_system": false,
+      "auto_flag": false,
+      "best_times": false,
+      "dark_mode": false,
+      "animations": false,
+      "sound_effects": false,
+      "haptic_feedback": true,
+      "ml_assistance": false,
+      "auto_play": false,
+      "difficulty_prediction": false,
+      "debug_mode": false,
+      "performance_metrics": false,
+      "test_mode": false
+    }
+  }
+} 
