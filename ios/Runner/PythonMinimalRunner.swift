@@ -2,11 +2,8 @@ import Foundation
 import PythonKit
 
 @objc class PythonMinimalRunner: NSObject {
-    private static var isInitialized = false
-
-    private static func initializeEmbeddedPython() {
-        guard !isInitialized else { return }
-
+    // This closure will be executed lazily and thread-safely exactly once.
+    private static let initializePython: () = {
         // 1. Find the path to the bundled python-stdlib
         guard let stdLibPath = Bundle.main.path(forResource: "python-stdlib", ofType: nil) else {
             fatalError("Could not find python-stdlib in app bundle!")
@@ -25,18 +22,19 @@ import PythonKit
         setenv("PYTHONPATH", stdLibPath, 1)
         print("🔍 Set PYTHONHOME and PYTHONPATH to embedded paths")
 
-        // 4. Initialize PythonKit (no need to specify library path in newer versions)
+        // 4. Initialize PythonKit
         print("🔍 Successfully initialized embedded PythonKit")
-
-        isInitialized = true
-    }
+    }()
 
     @objc static func addOneAndOne() -> NSNumber? {
         print("🔍 PythonMinimalRunner: Starting embedded Python test - UPDATED VERSION")
         
-        // Initialize embedded Python if not already done
-        initializeEmbeddedPython()
+        // Trigger the one-time initialization by accessing the static property.
+        // Swift ensures this is safe and only runs the closure once.
+        _ = initializePython
 
+        // ... (The rest of your function remains exactly the same)
+        
         // First, let's check what's actually in the bundle
         print("🔍 Checking bundle contents...")
         let bundlePath = Bundle.main.bundlePath
