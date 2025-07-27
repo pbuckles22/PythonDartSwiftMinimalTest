@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import "package:flutter/services.dart";
 import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
 import '../providers/settings_provider.dart';
@@ -39,6 +40,11 @@ class _GamePageState extends State<GamePage> {
         title: const Text('Minesweeper with ML'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.code),
+            onPressed: _testPython,
+            tooltip: "Test Python Integration",
+          ),
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: _showSettings,
@@ -115,6 +121,24 @@ class _GamePageState extends State<GamePage> {
         },
       ),
     );
+  }
+
+  void _testPython() async {
+    print("🚨🚨🚨 MANUAL PYTHON TEST BUTTON PRESSED 🚨🚨🚨");
+    const pythonChannel = MethodChannel("python/minimal");
+    try {
+      print("🚨🚨🚨 About to call native addOneAndOne... 🚨🚨🚨");
+      final value = await pythonChannel.invokeMethod("addOneAndOne");
+      print("🚨🚨🚨 SUCCESS - Native returned: $value 🚨🚨🚨");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Python test: 1+1 = $value")),
+      );
+    } catch (e) {
+      print("🚨🚨🚨 FAILED - Error: $e 🚨🚨🚨");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Python test failed: $e")),
+      );
+    }
   }
 
   void _showSettings() {

@@ -1,120 +1,92 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'dart:io';
+import 'presentation/providers/game_provider.dart';
+import 'presentation/providers/settings_provider.dart';
+import 'core/game_mode_config.dart';
+import 'core/feature_flags.dart';
+import 'presentation/pages/game_page.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Python Integration Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const PythonDemoPage(),
-    );
-  }
-}
-
-class PythonDemoPage extends StatefulWidget {
-  const PythonDemoPage({super.key});
-
-  @override
-  State<PythonDemoPage> createState() => _PythonDemoPageState();
-}
-
-class _PythonDemoPageState extends State<PythonDemoPage> {
-  static const pythonChannel = MethodChannel('python/minimal');
-  String _result = 'Click the button to call Python (1+1)';
-  bool _loading = false;
-
-  Future<void> _callPython() async {
-    print('🔔 Dart: _callPython() called');
-    setState(() { 
-      _loading = true;
-    });
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Validate game configuration before app starts
+  try {
+    await GameModeConfig.instance.loadGameModes();
+    // Set all feature flags from JSON config
+    final featureFlagMap = GameModeConfig.instance.defaultFeatureFlags;
+    // Map JSON keys to FeatureFlags static fields
+    FeatureFlags.enableFirstClickGuarantee = featureFlagMap['kickstarter_mode'] ?? false;
+    FeatureFlags.enable5050Detection = featureFlagMap['5050_detection'] ?? false;
+    FeatureFlags.enable5050SafeMove = featureFlagMap['5050_safe_move'] ?? false;
+    FeatureFlags.enableGameStatistics = featureFlagMap['game_statistics'] ?? false;
+    FeatureFlags.enableBoardReset = featureFlagMap['board_reset'] ?? false;
+    FeatureFlags.enableCustomDifficulty = featureFlagMap['custom_difficulty'] ?? false;
+    FeatureFlags.enableUndoMove = featureFlagMap['undo_move'] ?? false;
+    FeatureFlags.enableHintSystem = featureFlagMap['hint_system'] ?? false;
+    FeatureFlags.enableAutoFlag = featureFlagMap['auto_flag'] ?? false;
+    FeatureFlags.enableBestTimes = featureFlagMap['best_times'] ?? false;
+    FeatureFlags.enableDarkMode = featureFlagMap['dark_mode'] ?? false;
+    FeatureFlags.enableAnimations = featureFlagMap['animations'] ?? false;
+    FeatureFlags.enableSoundEffects = featureFlagMap['sound_effects'] ?? false;
+    FeatureFlags.enableHapticFeedback = featureFlagMap['haptic_feedback'] ?? false;
+    FeatureFlags.enableMLAssistance = featureFlagMap['ml_assistance'] ?? false;
+    FeatureFlags.enableAutoPlay = featureFlagMap['auto_play'] ?? false;
+    FeatureFlags.enableDifficultyPrediction = featureFlagMap['difficulty_prediction'] ?? false;
+    FeatureFlags.enableDebugMode = featureFlagMap['debug_mode'] ?? false;
+    FeatureFlags.enablePerformanceMetrics = featureFlagMap['performance_metrics'] ?? false;
+    FeatureFlags.enableTestMode = featureFlagMap['test_mode'] ?? false;
     
-    try {
-      print('🔔 Dart: About to call native addOneAndOne...');
-      final value = await pythonChannel.invokeMethod('addOneAndOne');
-      print('🔔 Dart: Native returned: $value');
-      
-      setState(() {
-        _result = 'Python result: $value';
-      });
-    } on PlatformException catch (e) {
-      print('🔔 Dart: PlatformException: $e');
-      setState(() {
-        _result = 'Error: ${e.message}';
-      });
-    } catch (e, st) {
-      print('🔔 Dart: Unexpected error: $e\n$st');
-      setState(() {
-        _result = 'Error: $e';
-      });
-    } finally {
-      setState(() { _loading = false; });
-    }
+    // print('DEBUG: main - FeatureFlags initialized from JSON:');
+    // print('DEBUG:   enableFirstClickGuarantee: ${FeatureFlags.enableFirstClickGuarantee}');
+    // print('DEBUG:   enable5050Detection: ${FeatureFlags.enable5050Detection}');
+    // print('DEBUG:   enable5050SafeMove: ${FeatureFlags.enable5050SafeMove}');
+    
+    // print('Game configuration validation passed');
+  } catch (e) {
+    // print('CRITICAL ERROR: Game configuration validation failed: $e');
+    // print('App will exit due to configuration error.');
+    // Force exit the app immediately
+    exit(1);
   }
+  
+  runApp(const MinesweeperApp());
+}
+
+// Hot reload support for development
+void hotReload() async {
+  await GameModeConfig.instance.reload();
+}
+
+class MinesweeperApp extends StatelessWidget {
+  const MinesweeperApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Python Integration Demo'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Text(
-              'Python Integration Test',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'This app calls a Python script that adds 1+1',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 24),
-            
-            ElevatedButton(
-              onPressed: _loading ? null : _callPython,
-              child: Text(_loading ? 'Calling Python...' : 'Call Python (1+1)'),
-            ),
-            
-            const SizedBox(height: 16),
-            
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    'Result:',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _result,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          ],
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => SettingsProvider()),
+        ChangeNotifierProvider(create: (context) => GameProvider()),
+      ],
+      child: MaterialApp(
+        title: 'Minesweeper with ML',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.blue,
+            brightness: Brightness.light,
+          ),
+          useMaterial3: true,
         ),
+        darkTheme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.blue,
+            brightness: Brightness.dark,
+          ),
+          useMaterial3: true,
+        ),
+        home: const GamePage(),
+        debugShowCheckedModeBanner: false,
       ),
     );
   }
-} 
+}
