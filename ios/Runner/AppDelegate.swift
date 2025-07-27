@@ -26,6 +26,25 @@ import Flutter
           print("🔔 Swift: PythonMinimalRunner returned nil, sending error")
           result(FlutterError(code: "PYTHON_ERROR", message: "Failed to get result from Python", details: nil))
         }
+      } else if call.method == "find5050Situations" {
+        print("🔔 Swift: Calling PythonMinimalRunner.find5050Situations()")
+        
+        guard let args = call.arguments as? [String: Any],
+              let probabilityMap = args["probabilityMap"] as? [String: Double] else {
+          print("🔔 Swift: Invalid arguments for find5050Situations")
+          result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid arguments for find5050Situations", details: nil))
+          return
+        }
+        
+        let value = PythonMinimalRunner.find5050Situations(probabilityMap: probabilityMap)
+        print("🔔 Swift: PythonMinimalRunner returned: \(String(describing: value))")
+        if let value = value {
+          print("🔔 Swift: Sending 50/50 result back to Flutter: \(value)")
+          result(value)
+        } else {
+          print("🔔 Swift: PythonMinimalRunner returned nil, sending error")
+          result(FlutterError(code: "PYTHON_ERROR", message: "Failed to get 50/50 result from Python", details: nil))
+        }
       } else {
         print("🔔 Swift: Unknown method: \(call.method)")
         result(FlutterError(code: "UNSUPPORTED_METHOD", message: "Method \(call.method) not implemented", details: nil))

@@ -46,6 +46,10 @@ class _GamePageState extends State<GamePage> {
             tooltip: "Test Python Integration",
           ),
           IconButton(
+            icon: const Icon(Icons.psychology),
+            onPressed: _test5050Detection,
+            tooltip: "Test 50/50 Detection",
+          ),          IconButton(
             icon: const Icon(Icons.settings),
             onPressed: _showSettings,
           ),
@@ -141,6 +145,38 @@ class _GamePageState extends State<GamePage> {
     }
   }
 
+  void _test5050Detection() async {
+    print("🔔 Dart: _test5050Detection() called from GamePage");
+    const pythonChannel = MethodChannel("python/minimal");
+    
+    // Create a test probability map with some 50/50 situations
+    final testProbabilityMap = {
+      "(0, 0)": 0.5,
+      "(1, 1)": 0.3,
+      "(2, 2)": 0.5,
+      "(3, 3)": 0.8,
+    };
+    
+    try {
+      final result = await pythonChannel.invokeMethod("find5050Situations", {
+        "probabilityMap": testProbabilityMap,
+      });
+      print("🔔 Dart: 50/50 detection returned: $result");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("50/50 Test: Found ${(result as List).length} cells")),
+      );
+    } on PlatformException catch (e) {
+      print("🔔 Dart: PlatformException: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("50/50 Error: ${e.message}")),
+      );
+    } catch (e) {
+      print("🔔 Dart: Unexpected error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Unexpected Error: $e")),
+      );
+    }
+  }
   void _showSettings() {
     Navigator.of(context).push(
       MaterialPageRoute(
