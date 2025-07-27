@@ -120,4 +120,62 @@ import PythonKit
         print("✅ Successfully got result from Python: \(result)")
         return NSNumber(value: result)
     }
+    
+    @objc static func find5050Situations(probabilityMap: [String: Double]) -> [[Int]]? {
+        print("🔍 PythonMinimalRunner: Starting 50/50 detection")
+        
+        // Trigger the one-time initialization by accessing the static property.
+        _ = initializePython
+        
+        // Set up Python path to include the bundled Python files
+        let sys = Python.import("sys")
+        
+        // Try multiple possible paths for the Resources directory
+        let possiblePaths = [
+            Bundle.main.path(forResource: "Resources", ofType: nil),
+            Bundle.main.path(forResource: "Runner", ofType: nil)?.appending("/Resources"),
+            Bundle.main.bundlePath.appending("/Runner/Resources"),
+            Bundle.main.bundlePath.appending("/Resources")
+        ]
+        
+        var resourcePath: String? = nil
+        for path in possiblePaths {
+            if let path = path, FileManager.default.fileExists(atPath: path) {
+                resourcePath = path
+                break
+            }
+        }
+        
+        if let resourcePath = resourcePath {
+            if !Array(sys.path).contains(PythonObject(resourcePath)) {
+                sys.path.insert(0, PythonObject(resourcePath))
+                print("🔍 Added Resources directory to sys.path: \(resourcePath)")
+            }
+        } else {
+            print("❌ Could not find Resources path for 50/50 detection")
+            return nil
+        }
+        
+        // Import the find_5050 module and call the function
+        print("🔍 Attempting to import find_5050 module...")
+        let pyModule = Python.import("find_5050")
+        print("🔍 Successfully imported find_5050 module")
+        
+        // Convert Swift dictionary to Python dictionary
+        let pyProbabilityMap = PythonObject(probabilityMap)
+        print("🔍 Converted probability map to Python object")
+        
+        print("🔍 Calling find_5050_situations()...")
+        let pyResult = pyModule.find_5050_situations(pyProbabilityMap)
+        print("🔍 Got result from Python: \(pyResult)")
+        
+        // Convert Python result back to Swift array
+        if let resultArray = Array(pyResult) as? [[Int]] {
+            print("✅ Successfully got 50/50 result from Python: \(resultArray)")
+            return resultArray
+        } else {
+            print("❌ Failed to convert Python result to Swift array")
+            return nil
+        }
+    }
 }
