@@ -28,7 +28,7 @@ import Flutter
         }
       } else {
         print("🔔 Swift: Unknown method: \(call.method)")
-        result(FlutterMethodNotImplemented)
+        result(FlutterError(code: "UNSUPPORTED_METHOD", message: "Method \(call.method) not implemented", details: nil))
       }
     })
 
