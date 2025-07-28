@@ -29,6 +29,7 @@ class SettingsProvider extends ChangeNotifier {
   bool _isMLAssistanceEnabled = false;
   bool _isAutoPlayEnabled = false;
   bool _isDifficultyPredictionEnabled = false;
+  bool _isDebugProbabilityModeEnabled = false;
 
   // --- Getters for new flags ---
   bool get isFirstClickGuaranteeEnabled => _isFirstClickGuaranteeEnabled;
@@ -51,11 +52,19 @@ class SettingsProvider extends ChangeNotifier {
   bool get isMLAssistanceEnabled => _isMLAssistanceEnabled;
   bool get isAutoPlayEnabled => _isAutoPlayEnabled;
   bool get isDifficultyPredictionEnabled => _isDifficultyPredictionEnabled;
+  bool get isDebugProbabilityModeEnabled => _isDebugProbabilityModeEnabled;
 
   // Initialize settings
   SettingsProvider() {
-    _loadSettings();
+    // Don't call _loadSettings() in constructor - it will be called after GameModeConfig is loaded
+    // The constructor should not do async work
     notifyListeners(); // Ensure listeners are notified after loading settings
+  }
+
+  // Load settings from GameModeConfig (should be called after GameModeConfig is loaded)
+  void loadSettingsFromConfig() {
+    _loadSettings();
+    notifyListeners();
   }
 
   // Toggle first click guarantee (Classic vs Kickstarter mode)
@@ -186,6 +195,13 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void toggleDebugProbabilityMode() {
+    _isDebugProbabilityModeEnabled = !_isDebugProbabilityModeEnabled;
+    FeatureFlags.enableDebugProbabilityMode = _isDebugProbabilityModeEnabled;
+    _saveSettings();
+    notifyListeners();
+  }
+
   // Set specific mode
   void setGameMode(bool isKickstarterMode) {
     _isClassicMode = !isKickstarterMode;
@@ -236,6 +252,14 @@ class SettingsProvider extends ChangeNotifier {
     _is5050DetectionEnabled = GameModeConfig.instance.default5050Detection;
     _is5050SafeMoveEnabled = GameModeConfig.instance.default5050SafeMove;
     _selectedDifficulty = GameModeConfig.instance.defaultGameMode?.id ?? 'hard';
+    
+    // Add debug logging
+    print('DEBUG: SettingsProvider._loadSettings() called');
+    print('DEBUG:   GameModeConfig.instance.defaultGameMode?.id: ${GameModeConfig.instance.defaultGameMode?.id}');
+    print('DEBUG:   _selectedDifficulty set to: $_selectedDifficulty');
+    print('DEBUG:   defaultKickstarterMode: ${GameModeConfig.instance.defaultKickstarterMode}');
+    print('DEBUG:   default5050Detection: ${GameModeConfig.instance.default5050Detection}');
+    
     // --- New: Initialize user-facing feature flags from GameModeConfig ---
     _isUndoMoveEnabled = GameModeConfig.instance.defaultUndoMove;
     _isHintSystemEnabled = GameModeConfig.instance.defaultHintSystem;
@@ -251,6 +275,7 @@ class SettingsProvider extends ChangeNotifier {
     _isMLAssistanceEnabled = GameModeConfig.instance.defaultMLAssistance;
     _isAutoPlayEnabled = GameModeConfig.instance.defaultAutoPlay;
     _isDifficultyPredictionEnabled = GameModeConfig.instance.defaultDifficultyPrediction;
+    _isDebugProbabilityModeEnabled = FeatureFlags.enableDebugProbabilityMode;
     
     // Note: Feature flags are set in main.dart from JSON config
     // We only set the internal state here, not the global feature flags
@@ -285,6 +310,7 @@ class SettingsProvider extends ChangeNotifier {
     _isMLAssistanceEnabled = GameModeConfig.instance.defaultMLAssistance;
     _isAutoPlayEnabled = GameModeConfig.instance.defaultAutoPlay;
     _isDifficultyPredictionEnabled = GameModeConfig.instance.defaultDifficultyPrediction;
+    _isDebugProbabilityModeEnabled = FeatureFlags.enableDebugProbabilityMode;
     // Note: Feature flags are set in main.dart from JSON config
     // We only set the internal state here, not the global feature flags
     _saveSettings();

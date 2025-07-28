@@ -69,6 +69,7 @@
       "auto_play": false,
       "difficulty_prediction": false,
       "debug_mode": false,
+      "debug_probability_mode": false,
       "performance_metrics": false,
       "test_mode": false
     }

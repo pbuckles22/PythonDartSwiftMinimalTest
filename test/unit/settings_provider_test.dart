@@ -17,6 +17,8 @@ void main() {
 
     setUp(() {
       settingsProvider = SettingsProvider();
+      // Load settings from config after GameModeConfig is loaded
+      settingsProvider.loadSettingsFromConfig();
     });
 
     tearDown(() {

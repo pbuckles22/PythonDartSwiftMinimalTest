@@ -18,6 +18,13 @@ class GameProvider extends ChangeNotifier {
   // 50/50 detection state
   List<List<int>> _fiftyFiftyCells = [];
   List<List<int>> get fiftyFiftyCells => _fiftyFiftyCells;
+  
+  // Probability analysis highlighting state
+  List<List<int>> _probabilityHighlightCells = [];
+  List<List<int>> get probabilityHighlightCells => _probabilityHighlightCells;
+  
+  // Static callback for probability analysis
+  static Function(int, int)? onProbabilityAnalysisRequested;
 
   GameProvider({GameRepository? repository, TimerService? timerService}) 
       : _repository = repository ?? GameRepositoryImpl(),
@@ -97,6 +104,7 @@ class GameProvider extends ChangeNotifier {
       _setLoading(true);
       _clearError();
       
+      final oldState = _gameState;
       _gameState = await _repository.toggleFlag(row, col);
       
       // Start timer on first move if not already running
@@ -104,7 +112,10 @@ class GameProvider extends ChangeNotifier {
         _timerService.start();
       }
       
-      await updateFiftyFiftyDetection();
+      // Only update 50/50 detection if the game state actually changed
+      if (oldState != _gameState) {
+        await updateFiftyFiftyDetection();
+      }
       notifyListeners();
     } catch (e) {
       _setError('Failed to toggle flag: $e');
@@ -564,6 +575,200 @@ class GameProvider extends ChangeNotifier {
     return false; // Not a true 50/50 situation
   }
 
+  /// Calculate the real probability for a cell (public method for UI)
+  double calculateCellProbability(int row, int col) {
+    return _calculateCellProbability(row, col);
+  }
+
+  /// Get detailed probability analysis for a cell (public method for UI)
+  Map<String, dynamic> getCellProbabilityAnalysis(int row, int col) {
+    if (_gameState == null) {
+      return {
+        'status': 'No game state',
+        'revealedNeighbors': 0,
+        'factors': ['Game not initialized'],
+      };
+    }
+    
+    final cell = _gameState!.getCell(row, col);
+    final factors = <String>[];
+    
+    if (cell.isRevealed) {
+      return {
+        'status': 'Cell is revealed',
+        'revealedNeighbors': 0,
+        'factors': ['Cell value: ${cell.bombsAround}'],
+      };
+    }
+    
+    if (cell.isFlagged) {
+      return {
+        'status': 'Cell is flagged',
+        'revealedNeighbors': 0,
+        'factors': ['Cell is flagged'],
+      };
+    }
+    
+    final revealedNeighbors = _getRevealedNeighbors(row, col);
+    factors.add('Has ${revealedNeighbors.length} revealed neighbors');
+    
+    if (revealedNeighbors.isEmpty) {
+      return {
+        'status': 'No revealed neighbors',
+        'revealedNeighbors': 0,
+        'factors': factors,
+      };
+    }
+    
+    double totalProbability = 0.0;
+    int contributingNeighbors = 0;
+    
+    for (final neighbor in revealedNeighbors) {
+      final neighborRow = neighbor[0];
+      final neighborCol = neighbor[1];
+      final neighborCell = _gameState!.getCell(neighborRow, neighborCol);
+      
+      if (neighborCell.isRevealed && neighborCell.bombsAround > 0) {
+        final unrevealedNeighbors = _getUnrevealedNeighbors(neighborRow, neighborCol);
+        final flaggedNeighbors = _getFlaggedNeighbors(neighborRow, neighborCol);
+        final remainingMines = neighborCell.bombsAround - flaggedNeighbors.length;
+        
+        factors.add('Neighbor ($neighborRow, $neighborCol): needs $remainingMines mines from ${unrevealedNeighbors.length} cells');
+        
+        if (unrevealedNeighbors.isNotEmpty && remainingMines >= 0) {
+          final probability = remainingMines / unrevealedNeighbors.length;
+          totalProbability += probability;
+          contributingNeighbors++;
+          
+          factors.add('  → Probability contribution: ${(probability * 100).toStringAsFixed(1)}%');
+        }
+      }
+    }
+    
+    final finalProbability = contributingNeighbors > 0 ? totalProbability / contributingNeighbors : 0.0;
+    
+    String status;
+    if (finalProbability > 0.4 && finalProbability < 0.6) {
+      status = 'Near 50/50 situation';
+    } else if (finalProbability > 0.6) {
+      status = 'High probability of mine';
+    } else if (finalProbability < 0.4) {
+      status = 'Low probability of mine';
+    } else {
+      status = 'Unknown probability';
+    }
+    
+    return {
+      'status': status,
+      'revealedNeighbors': revealedNeighbors.length,
+      'factors': factors,
+    };
+  }
+
+  /// Save current board state for debugging
+  void saveBoardStateForDebug() {
+    if (_gameState == null) return;
+    
+    final boardState = <String, dynamic>{
+      'timestamp': DateTime.now().toIso8601String(),
+      'rows': _gameState!.rows,
+      'columns': _gameState!.columns,
+      'minesCount': _gameState!.minesCount,
+      'board': <List<Map<String, dynamic>>>[],
+    };
+    
+    for (int row = 0; row < _gameState!.rows; row++) {
+      final rowData = <Map<String, dynamic>>[];
+      for (int col = 0; col < _gameState!.columns; col++) {
+        final cell = _gameState!.getCell(row, col);
+        rowData.add({
+          'row': row,
+          'col': col,
+          'hasBomb': cell.hasBomb,
+          'bombsAround': cell.bombsAround,
+          'isRevealed': cell.isRevealed,
+          'isFlagged': cell.isFlagged,
+          'state': cell.state.toString(),
+        });
+      }
+      boardState['board'].add(rowData);
+    }
+    
+    // Save to a file or print for debugging
+    print('🔍🔍🔍 BOARD STATE SAVED FOR DEBUG 🔍🔍🔍');
+    print('Board dimensions: ${_gameState!.rows}x${_gameState!.columns}');
+    print('Total mines: ${_gameState!.minesCount}');
+    print('Revealed cells: ${_gameState!.revealedCount}');
+    print('Flagged cells: ${_gameState!.flaggedCount}');
+    print('Board state JSON: ${boardState.toString()}');
+  }
+
+  /// Debug probability calculation with step-by-step reasoning
+  Map<String, dynamic> debugProbabilityCalculation(int row, int col) {
+    if (_gameState == null) {
+      return {'error': 'No game state'};
+    }
+    
+    final cell = _gameState!.getCell(row, col);
+    if (cell.isRevealed) {
+      return {'error': 'Cell is revealed', 'value': cell.bombsAround};
+    }
+    
+    if (cell.isFlagged) {
+      return {'error': 'Cell is flagged'};
+    }
+    
+    final debug = <String, dynamic>{
+      'targetCell': {'row': row, 'col': col, 'hasBomb': cell.hasBomb},
+      'revealedNeighbors': <List<Map<String, dynamic>>>[],
+      'calculation': <String, dynamic>{},
+    };
+    
+    final revealedNeighbors = _getRevealedNeighbors(row, col);
+    double totalProbability = 0.0;
+    int contributingNeighbors = 0;
+    
+    for (final neighbor in revealedNeighbors) {
+      final neighborRow = neighbor[0];
+      final neighborCol = neighbor[1];
+      final neighborCell = _gameState!.getCell(neighborRow, neighborCol);
+      
+      if (neighborCell.isRevealed && neighborCell.bombsAround > 0) {
+        final unrevealedNeighbors = _getUnrevealedNeighbors(neighborRow, neighborCol);
+        final flaggedNeighbors = _getFlaggedNeighbors(neighborRow, neighborCol);
+        final remainingMines = neighborCell.bombsAround - flaggedNeighbors.length;
+        
+        final neighborDebug = {
+          'position': [neighborRow, neighborCol],
+          'value': neighborCell.bombsAround,
+          'unrevealedNeighbors': unrevealedNeighbors.map((pos) => [pos[0], pos[1]]).toList(),
+          'flaggedNeighbors': flaggedNeighbors.map((pos) => [pos[0], pos[1]]).toList(),
+          'remainingMines': remainingMines,
+          'probability': unrevealedNeighbors.isNotEmpty ? remainingMines / unrevealedNeighbors.length : 0.0,
+        };
+        
+        debug['revealedNeighbors'].add([neighborDebug]);
+        
+        if (unrevealedNeighbors.isNotEmpty && remainingMines >= 0) {
+          final probability = remainingMines / unrevealedNeighbors.length;
+          totalProbability += probability;
+          contributingNeighbors++;
+        }
+      }
+    }
+    
+    final finalProbability = contributingNeighbors > 0 ? totalProbability / contributingNeighbors : 0.0;
+    
+    debug['calculation'] = {
+      'totalProbability': totalProbability,
+      'contributingNeighbors': contributingNeighbors,
+      'finalProbability': finalProbability,
+      'finalProbabilityPercent': (finalProbability * 100).toStringAsFixed(1),
+    };
+    
+    return debug;
+  }
+
   /// Check if a cell is part of a 50/50 situation
   double _check5050Probability(int row, int col) {
     // A true 50/50 situation is when:
@@ -776,5 +981,234 @@ class GameProvider extends ChangeNotifier {
   void forceResetRepository() {
     // Optionally, reset repository or game state here
     // For now, this is a no-op stub
+  }
+
+  /// Debug method to analyze why specific cells are not detected as 50/50
+  void debug5050Analysis(int row, int col) {
+    if (_gameState == null) {
+      print('🔍 DEBUG: No game state available');
+      return;
+    }
+    
+    final cell = _gameState!.getCell(row, col);
+    print('🔍 DEBUG: Analyzing cell ($row, $col)');
+    print('🔍 DEBUG: Cell is revealed: ${cell.isRevealed}');
+    print('🔍 DEBUG: Cell is flagged: ${cell.isFlagged}');
+    
+    if (cell.isRevealed) {
+      print('🔍 DEBUG: Cell is revealed, cannot be part of 50/50');
+      return;
+    }
+    
+    if (cell.isFlagged) {
+      print('🔍 DEBUG: Cell is flagged, cannot be part of 50/50');
+      return;
+    }
+    
+    final revealedNeighbors = _getRevealedNeighbors(row, col);
+    print('🔍 DEBUG: Cell has ${revealedNeighbors.length} revealed neighbors');
+    
+    for (final neighbor in revealedNeighbors) {
+      final neighborRow = neighbor[0];
+      final neighborCol = neighbor[1];
+      final neighborCell = _gameState!.getCell(neighborRow, neighborCol);
+      
+      print('🔍 DEBUG: Neighbor ($neighborRow, $neighborCol):');
+      print('🔍 DEBUG:   - Value: ${neighborCell.bombsAround}');
+      print('🔍 DEBUG:   - Is revealed: ${neighborCell.isRevealed}');
+      
+      if (neighborCell.isRevealed && neighborCell.bombsAround > 0) {
+        final unrevealedNeighbors = _getUnrevealedNeighbors(neighborRow, neighborCol);
+        final flaggedNeighbors = _getFlaggedNeighbors(neighborRow, neighborCol);
+        final remainingMines = neighborCell.bombsAround - flaggedNeighbors.length;
+        
+        print('🔍 DEBUG:   - Unrevealed neighbors: ${unrevealedNeighbors.length}');
+        print('🔍 DEBUG:   - Flagged neighbors: ${flaggedNeighbors.length}');
+        print('🔍 DEBUG:   - Remaining mines needed: $remainingMines');
+        
+        // Check if this is a potential 50/50 situation
+        if (unrevealedNeighbors.length == 2 && remainingMines == 1) {
+          print('🔍 DEBUG:   ✅ POTENTIAL 50/50: 2 unrevealed neighbors, 1 remaining mine');
+          
+          // Check if current cell is one of the unrevealed neighbors
+          bool isCurrentCellUnrevealed = unrevealedNeighbors.any((n) => n[0] == row && n[1] == col);
+          if (isCurrentCellUnrevealed) {
+            print('🔍 DEBUG:   ✅ Current cell is one of the unrevealed neighbors');
+            
+            // Find the other unrevealed neighbor
+            List<int> otherCell = [-1, -1];
+            for (final unrevealed in unrevealedNeighbors) {
+              if (unrevealed[0] != row || unrevealed[1] != col) {
+                otherCell = unrevealed;
+                break;
+              }
+            }
+            
+            if (otherCell[0] != -1) {
+              print('🔍 DEBUG:   ✅ Other unrevealed neighbor: (${otherCell[0]}, ${otherCell[1]})');
+              
+              // Check if the other cell has additional information
+              final otherRevealedNeighbors = _getRevealedNeighbors(otherCell[0], otherCell[1]);
+              bool hasAdditionalInfo = false;
+              
+              for (final otherNeighbor in otherRevealedNeighbors) {
+                if (otherNeighbor[0] != neighborRow || otherNeighbor[1] != neighborCol) {
+                  final otherNeighborCell = _gameState!.getCell(otherNeighbor[0], otherNeighbor[1]);
+                  if (otherNeighborCell.isRevealed && otherNeighborCell.bombsAround > 0) {
+                    final otherUnrevealedNeighbors = _getUnrevealedNeighbors(otherNeighbor[0], otherNeighbor[1]);
+                    final otherFlaggedNeighbors = _getFlaggedNeighbors(otherNeighbor[0], otherNeighbor[1]);
+                    final otherRemainingMines = otherNeighborCell.bombsAround - otherFlaggedNeighbors.length;
+                    
+                    print('🔍 DEBUG:   ⚠️ Other cell has additional neighbor (${otherNeighbor[0]}, ${otherNeighbor[1]})');
+                    print('🔍 DEBUG:     - Unrevealed neighbors: ${otherUnrevealedNeighbors.length}');
+                    print('🔍 DEBUG:     - Remaining mines: $otherRemainingMines');
+                    
+                    if (otherUnrevealedNeighbors.length != 2 || otherRemainingMines != 1) {
+                      hasAdditionalInfo = true;
+                      print('🔍 DEBUG:     ❌ Additional info breaks 50/50');
+                      break;
+                    }
+                  }
+                }
+              }
+              
+              if (!hasAdditionalInfo) {
+                print('🔍 DEBUG:   ✅ CONFIRMED: This is a true 50/50 situation!');
+              } else {
+                print('🔍 DEBUG:   ❌ REJECTED: Additional information breaks 50/50');
+              }
+            }
+          } else {
+            print('🔍 DEBUG:   ❌ Current cell is not one of the unrevealed neighbors');
+          }
+        } else {
+          print('🔍 DEBUG:   ❌ NOT 50/50: ${unrevealedNeighbors.length} unrevealed neighbors, $remainingMines remaining mines');
+        }
+             } else {
+         print('🔍 DEBUG:   ❌ NOT 50/50: Not a revealed number cell');
+       }
+     }
+   }
+
+  /// Get all cells that factored into the probability calculation for a given cell
+  List<List<int>> getCellsInProbabilityCalculation(int row, int col) {
+    if (_gameState == null) return [];
+    
+    final cell = _gameState!.getCell(row, col);
+    if (cell.isRevealed || cell.isFlagged) return [];
+    
+    final contributingCells = <List<int>>[];
+    final revealedNeighbors = _getRevealedNeighbors(row, col);
+    
+    for (final neighbor in revealedNeighbors) {
+      final neighborRow = neighbor[0];
+      final neighborCol = neighbor[1];
+      final neighborCell = _gameState!.getCell(neighborRow, neighborCol);
+      
+      if (neighborCell.isRevealed && neighborCell.bombsAround > 0) {
+        final unrevealedNeighbors = _getUnrevealedNeighbors(neighborRow, neighborCol);
+        final flaggedNeighbors = _getFlaggedNeighbors(neighborRow, neighborCol);
+        final remainingMines = neighborCell.bombsAround - flaggedNeighbors.length;
+        
+        if (unrevealedNeighbors.isNotEmpty && remainingMines >= 0) {
+          // Add the revealed neighbor that's contributing
+          contributingCells.add([neighborRow, neighborCol]);
+          
+          // Add all unrevealed neighbors that are part of the calculation
+          for (final unrevealed in unrevealedNeighbors) {
+            if (!contributingCells.any((cell) => cell[0] == unrevealed[0] && cell[1] == unrevealed[1])) {
+              contributingCells.add(unrevealed);
+            }
+          }
+          
+          // Add flagged neighbors that are part of the calculation
+          for (final flagged in flaggedNeighbors) {
+            if (!contributingCells.any((cell) => cell[0] == flagged[0] && cell[1] == flagged[1])) {
+              contributingCells.add(flagged);
+            }
+          }
+        }
+      }
+    }
+    
+    return contributingCells;
+  }
+  
+  /// Set cells to highlight for probability analysis
+  void setProbabilityHighlight(int row, int col) {
+    _probabilityHighlightCells = getCellsInProbabilityCalculation(row, col);
+    notifyListeners();
+  }
+  
+  /// Clear probability highlighting
+  void clearProbabilityHighlight() {
+    _probabilityHighlightCells = [];
+    notifyListeners();
+  }
+  
+  /// Check if a cell should be highlighted for probability analysis
+  bool isCellHighlightedForProbability(int row, int col) {
+    return _probabilityHighlightCells.any((cell) => cell[0] == row && cell[1] == col);
+  }
+  
+  /// Debug a specific case - cell (4,0) that should be 100% but shows 77%
+  void debugSpecificCase() {
+    if (_gameState == null) {
+      print('🔍 DEBUG: No game state available');
+      return;
+    }
+    
+    print('🔍🔍🔍 DEBUGGING CELL (4,0) CASE 🔍🔍🔍');
+    
+    // Check cell (4,0)
+    final cell40 = _gameState!.getCell(4, 0);
+    print('🔍 Cell (4,0): isRevealed=${cell40.isRevealed}, isFlagged=${cell40.isFlagged}, hasBomb=${cell40.hasBomb}');
+    
+    // Check cell (3,1) - the revealed "1"
+    final cell31 = _gameState!.getCell(3, 1);
+    print('🔍 Cell (3,1): isRevealed=${cell31.isRevealed}, bombsAround=${cell31.bombsAround}');
+    
+    if (cell31.isRevealed && cell31.bombsAround == 1) {
+      // Get all neighbors of (3,1)
+      final neighbors = _getAllNeighbors(3, 1);
+      print('🔍 Neighbors of (3,1): ${neighbors.map((pos) => '(${pos[0]}, ${pos[1]})').join(', ')}');
+      
+      // Check each neighbor
+      for (final neighbor in neighbors) {
+        final neighborCell = _gameState!.getCell(neighbor[0], neighbor[1]);
+        print('🔍 Neighbor (${neighbor[0]}, ${neighbor[1]}): isRevealed=${neighborCell.isRevealed}, isFlagged=${neighborCell.isFlagged}, hasBomb=${neighborCell.hasBomb}');
+      }
+      
+      // Get unrevealed neighbors specifically
+      final unrevealedNeighbors = _getUnrevealedNeighbors(3, 1);
+      print('🔍 Unrevealed neighbors of (3,1): ${unrevealedNeighbors.map((pos) => '(${pos[0]}, ${pos[1]})').join(', ')}');
+      
+      // Get flagged neighbors
+      final flaggedNeighbors = _getFlaggedNeighbors(3, 1);
+      print('🔍 Flagged neighbors of (3,1): ${flaggedNeighbors.map((pos) => '(${pos[0]}, ${pos[1]})').join(', ')}');
+      
+      // Calculate what the probability should be
+      final remainingMines = cell31.bombsAround - flaggedNeighbors.length;
+      final probability = unrevealedNeighbors.isNotEmpty ? remainingMines / unrevealedNeighbors.length : 0.0;
+      print('🔍 Expected probability for (4,0): ${(probability * 100).toStringAsFixed(1)}%');
+      print('🔍   - Remaining mines needed: $remainingMines');
+      print('🔍   - Unrevealed neighbors: ${unrevealedNeighbors.length}');
+    }
+  }
+  
+  /// Get all neighbors of a cell (including revealed, unrevealed, and flagged)
+  List<List<int>> _getAllNeighbors(int row, int col) {
+    final neighbors = <List<int>>[];
+    for (int dr = -1; dr <= 1; dr++) {
+      for (int dc = -1; dc <= 1; dc++) {
+        if (dr == 0 && dc == 0) continue;
+        final newRow = row + dr;
+        final newCol = col + dc;
+        if (newRow >= 0 && newRow < _gameState!.rows && newCol >= 0 && newCol < _gameState!.columns) {
+          neighbors.add([newRow, newCol]);
+        }
+      }
+    }
+    return neighbors;
   }
 } 

@@ -4,12 +4,13 @@
 
 ### **🔥 CRITICAL (Fix Immediately)**
 
-1. **Difficulty Setting Bug** 
+1. **✅ Difficulty Setting Bug - FIXED** 
    - **Issue**: App starts with EASY difficulty despite HARD being default in config
    - **Location**: Settings loading/initialization
    - **Impact**: Users see wrong difficulty on first launch
-   - **Status**: 🔴 Pending
+   - **Status**: ✅ **RESOLVED** - App now correctly starts with HARD difficulty
    - **Effort**: Low (1-2 hours)
+   - **Solution**: Fixed initialization order in SettingsProvider and main.dart
 
 ### **🚀 HIGH PRIORITY (Next Sprint)**
 
@@ -78,6 +79,9 @@
 - ✅ Game UI implementation
 - ✅ Settings provider implementation
 - ✅ Timer service implementation
+- ✅ **Debug Probability Mode Feature** - Added feature flag with settings toggle
+- ✅ **Long-press behavior improvements** - Fixed revealed cell coordinate display
+- ✅ **Haptic feedback optimization** - Only triggers when appropriate
 
 ### **🔄 IN PROGRESS**
 - 🔄 Test suite improvements (68/68 tests passing)
@@ -91,7 +95,7 @@
 
 ## 🎯 **IMMEDIATE NEXT STEPS**
 
-1. **Fix difficulty setting bug** (1-2 hours)
+1. **✅ Fix difficulty setting bug** (1-2 hours) - **COMPLETED**
 2. **Start code coverage improvement** with `settings_provider.dart` (highest impact)
 3. **Complete Python 50/50 integration** with game state
 4. **Implement kickstarter mode** (high user value)

@@ -28,6 +28,7 @@ class FeatureFlags {
   
   // Debug/Development features
   static bool enableDebugMode = false; // Debug mode
+  static bool enableDebugProbabilityMode = false; // Debug probability mode with UI controls
   static bool enablePerformanceMetrics = false; // Performance tracking
   static bool enableTestMode = false; // Test mode for development
 } 

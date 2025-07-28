@@ -34,6 +34,7 @@ void main() async {
     FeatureFlags.enableAutoPlay = featureFlagMap['auto_play'] ?? false;
     FeatureFlags.enableDifficultyPrediction = featureFlagMap['difficulty_prediction'] ?? false;
     FeatureFlags.enableDebugMode = featureFlagMap['debug_mode'] ?? false;
+    FeatureFlags.enableDebugProbabilityMode = featureFlagMap['debug_probability_mode'] ?? false;
     FeatureFlags.enablePerformanceMetrics = featureFlagMap['performance_metrics'] ?? false;
     FeatureFlags.enableTestMode = featureFlagMap['test_mode'] ?? false;
     
@@ -66,7 +67,14 @@ class MinesweeperApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => SettingsProvider()),
+        ChangeNotifierProvider(
+          create: (context) {
+            final settingsProvider = SettingsProvider();
+            // Load settings from config after GameModeConfig is already loaded
+            settingsProvider.loadSettingsFromConfig();
+            return settingsProvider;
+          },
+        ),
         ChangeNotifierProvider(create: (context) => GameProvider()),
       ],
       child: MaterialApp(

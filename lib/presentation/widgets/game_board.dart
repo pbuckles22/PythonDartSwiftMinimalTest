@@ -170,6 +170,9 @@ class _GameBoardState extends State<GameBoard> {
                               gameProvider.toggleFlag(row, col);
                               // _debugBoardAndCellSize(rows, columns, cellSize);
                             },
+                            onProbabilityAnalysis: GameProvider.onProbabilityAnalysisRequested != null 
+                                ? () => GameProvider.onProbabilityAnalysisRequested!(row, col)
+                                : null,
                           ),
                         );
                       },

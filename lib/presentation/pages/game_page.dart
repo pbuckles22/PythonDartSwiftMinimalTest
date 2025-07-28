@@ -7,6 +7,7 @@ import '../widgets/game_board.dart';
 import '../widgets/game_over_dialog.dart';
 import 'settings_page.dart';
 import '../../core/constants.dart';
+import '../../core/feature_flags.dart';
 import '../../services/timer_service.dart';
 
 class GamePage extends StatefulWidget {
@@ -42,30 +43,43 @@ class _GamePageState extends State<GamePage> {
         title: const Text('Minesweeper with ML'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.code),
-            onPressed: _testPython,
-            tooltip: "Test Python Integration",
-          ),
-          IconButton(
-            icon: const Icon(Icons.psychology),
-            onPressed: _test5050Detection,
-            tooltip: "Test 50/50 Detection",
-          ),
-          IconButton(
-            icon: const Icon(Icons.analytics),
-            onPressed: _enableProbabilityMode,
-            tooltip: "Enable Probability Mode (long-press cells)",
-          ),
-          IconButton(
-            icon: const Icon(Icons.bug_report),
-            onPressed: _saveBoardStateForDebug,
-            tooltip: "Save Board State for Debug",
-          ),
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: _debugSpecificCase,
-            tooltip: "Debug Cell (4,0) Case",
+          // Debug buttons - only show when debug probability mode is enabled
+          Consumer<SettingsProvider>(
+            builder: (context, settingsProvider, child) {
+              if (settingsProvider.isDebugProbabilityModeEnabled) {
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.code),
+                      onPressed: _testPython,
+                      tooltip: "Test Python Integration",
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.psychology),
+                      onPressed: _test5050Detection,
+                      tooltip: "Test 50/50 Detection",
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.analytics),
+                      onPressed: _enableProbabilityMode,
+                      tooltip: "Enable Probability Mode (long-press cells)",
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.bug_report),
+                      onPressed: _saveBoardStateForDebug,
+                      tooltip: "Save Board State for Debug",
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.search),
+                      onPressed: _debugSpecificCase,
+                      tooltip: "Debug Cell (4,0) Case",
+                    ),
+                  ],
+                );
+              }
+              return const SizedBox.shrink();
+            },
           ),
           IconButton(
             icon: const Icon(Icons.settings),
@@ -333,21 +347,7 @@ class _GamePageState extends State<GamePage> {
                       ],
                       if (debugInfo.containsKey('revealedNeighbors') && debugInfo['revealedNeighbors'].isNotEmpty) ...[
                         Text('Revealed neighbors:'),
-                        ...debugInfo['revealedNeighbors'].expand((neighborList) => neighborList).map((neighbor) => Padding(
-                          padding: const EdgeInsets.only(left: 16, top: 4),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('• (${neighbor['position'][0]}, ${neighbor['position'][1]}): value ${neighbor['value']}'),
-                              Text('  - Needs ${neighbor['remainingMines']} mines from ${neighbor['unrevealedNeighbors'].length} cells'),
-                              Text('  - Probability: ${(neighbor['probability'] * 100).toStringAsFixed(1)}%'),
-                              if (neighbor['unrevealedNeighbors'].isNotEmpty)
-                                Text('  - Unrevealed: ${neighbor['unrevealedNeighbors'].map((pos) => '(${pos[0]}, ${pos[1]})').join(', ')}'),
-                              if (neighbor['flaggedNeighbors'].isNotEmpty)
-                                Text('  - Flagged: ${neighbor['flaggedNeighbors'].map((pos) => '(${pos[0]}, ${pos[1]})').join(', ')}'),
-                            ],
-                          ),
-                        )),
+                        Text('(Debug info available in console)'),
                       ],
                     ],
                   ),

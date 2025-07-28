@@ -772,6 +772,14 @@ class SettingsPage extends StatelessWidget {
         _build5050SafeMoveToggle(context, settingsProvider),
         _buildSimpleToggle(
           context,
+          'Debug Probability Mode',
+          'Enable debug buttons and probability analysis features',
+          settingsProvider.isDebugProbabilityModeEnabled,
+          settingsProvider.toggleDebugProbabilityMode,
+          disabled: false,
+        ),
+        _buildSimpleToggle(
+          context,
           'ML Assistance',
           'Enable machine learning assistance',
           settingsProvider.isMLAssistanceEnabled,

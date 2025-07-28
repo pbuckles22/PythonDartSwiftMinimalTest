@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import '../../domain/entities/cell.dart';
 import '../providers/game_provider.dart';
+import '../providers/settings_provider.dart';
 import '../../services/haptic_service.dart';
 import '../../core/feature_flags.dart';
 
@@ -45,7 +46,13 @@ class CellWidget extends StatelessWidget {
               (LongPressGestureRecognizer instance) {
                 instance.onLongPress = () {
                   if (gameProvider.isPlaying) {
-                    HapticService.mediumImpact();
+                    // Get settings provider to check debug mode
+                    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+                    
+                    // Only provide haptic feedback if debug probability mode is enabled or for valid actions
+                    if (settingsProvider.isDebugProbabilityModeEnabled || gameProvider.isValidAction(row, col)) {
+                      HapticService.mediumImpact();
+                    }
                     
                     // If probability analysis is available (probability mode enabled), always do that
                     if (onProbabilityAnalysis != null) {
@@ -84,7 +91,13 @@ class CellWidget extends StatelessWidget {
               borderRadius: BorderRadius.circular(4.0),
             ),
             child: Center(
-              child: _buildCellContent(context, cell, is5050),
+              child: DefaultTextStyle(
+                style: const TextStyle(
+                  decoration: TextDecoration.none,
+                  decorationColor: Colors.transparent,
+                ),
+                child: _buildCellContent(context, cell, is5050),
+              ),
             ),
           ),
         );
@@ -146,19 +159,6 @@ class CellWidget extends StatelessWidget {
             color: Theme.of(context).colorScheme.primary,
             size: 20,
           ),
-          // Show coordinates in top-left corner
-          Positioned(
-            top: 1,
-            left: 1,
-            child: Text(
-              '${row},${col}',
-              style: TextStyle(
-                fontSize: 8,
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
         ],
       );
     } else if (cell.isIncorrectlyFlagged) {
@@ -182,67 +182,22 @@ class CellWidget extends StatelessWidget {
                           '💣', // Bomb emoji for other bombs
             style: TextStyle(fontSize: 20),
           ),
-          // Show coordinates in top-left corner
-          Positioned(
-            top: 1,
-            left: 1,
-            child: Text(
-              '${row},${col}',
-              style: TextStyle(
-                fontSize: 8,
-                color: Colors.red,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
           ],
         );
       } else if (cell.bombsAround > 0) {
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            Text(
-              '${cell.bombsAround}',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: _getNumberColor(cell.bombsAround),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            // Show coordinates in top-left corner
-            Positioned(
-              top: 1,
-              left: 1,
-              child: Text(
-                '${row},${col}',
-                style: TextStyle(
-                  fontSize: 8,
-                  color: _getNumberColor(cell.bombsAround),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
+        return Text(
+          '${cell.bombsAround}',
+          style: TextStyle(
+            fontSize: 16,
+            color: _getNumberColor(cell.bombsAround),
+            fontWeight: FontWeight.normal,
+            decoration: TextDecoration.none,
+            decorationColor: Colors.transparent,
+            decorationThickness: 0,
+          ),
         );
       } else {
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            const SizedBox.shrink(), // Empty cell
-            // Show coordinates in top-left corner
-            Positioned(
-              top: 1,
-              left: 1,
-              child: Text(
-                '${row},${col}',
-                style: TextStyle(
-                  fontSize: 8,
-                  color: Colors.grey,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        );
+        return const SizedBox.shrink(); // Empty cell
       }
     } else if (is5050 && FeatureFlags.enable5050Detection) {
       // Show a subtle indicator for 50/50 cells
@@ -261,49 +216,11 @@ class CellWidget extends StatelessWidget {
               size: 12,
             ),
           ),
-          // Show coordinates in top-left corner
-          Positioned(
-            top: 1,
-            left: 1,
-            child: Text(
-              '${row},${col}',
-              style: TextStyle(
-                fontSize: 8,
-                color: Colors.orange.shade600,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
         ],
       );
     } else {
-      // Unrevealed cell - make coordinates more visible
-      return Stack(
-        alignment: Alignment.center,
-        children: [
-          const SizedBox.shrink(), // Unrevealed cell
-          // Show coordinates in top-left corner with better visibility
-          Positioned(
-            top: 1,
-            left: 1,
-            child: Container(
-              padding: const EdgeInsets.all(1),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.7),
-                borderRadius: BorderRadius.circular(2),
-              ),
-              child: Text(
-                '${row},${col}',
-                style: TextStyle(
-                  fontSize: 8,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ],
-      );
+      // Unrevealed cell
+      return const SizedBox.shrink();
     }
   }
 
