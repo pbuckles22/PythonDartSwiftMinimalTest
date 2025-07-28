@@ -31,6 +31,8 @@ class _GamePageState extends State<GamePage> {
       final settingsProvider = context.read<SettingsProvider>();
       context.read<GameProvider>().initializeGame(settingsProvider.selectedDifficulty);
     });
+    
+    // Probability callback will be set when probability mode is enabled
   }
 
   @override
@@ -49,6 +51,21 @@ class _GamePageState extends State<GamePage> {
             icon: const Icon(Icons.psychology),
             onPressed: _test5050Detection,
             tooltip: "Test 50/50 Detection",
+          ),
+          IconButton(
+            icon: const Icon(Icons.analytics),
+            onPressed: _enableProbabilityMode,
+            tooltip: "Enable Probability Mode (long-press cells)",
+          ),
+          IconButton(
+            icon: const Icon(Icons.bug_report),
+            onPressed: _saveBoardStateForDebug,
+            tooltip: "Save Board State for Debug",
+          ),
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: _debugSpecificCase,
+            tooltip: "Debug Cell (4,0) Case",
           ),
           IconButton(
             icon: const Icon(Icons.settings),
@@ -176,6 +193,208 @@ class _GamePageState extends State<GamePage> {
       );
     }
   }
+
+  bool _probabilityModeEnabled = false;
+
+  void _enableProbabilityMode() {
+    _probabilityModeEnabled = !_probabilityModeEnabled;
+    final message = _probabilityModeEnabled 
+        ? "Probability mode ENABLED - long-press cells to see real probability"
+        : "Probability mode DISABLED";
+    
+    // Set or clear the probability callback based on mode
+    if (_probabilityModeEnabled) {
+      GameProvider.onProbabilityAnalysisRequested = _showCellProbability;
+    } else {
+      GameProvider.onProbabilityAnalysisRequested = null;
+      // Clear any existing highlighting
+      context.read<GameProvider>().clearProbabilityHighlight();
+    }
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: _probabilityModeEnabled ? Colors.green : Colors.grey,
+      ),
+    );
+  }
+
+  void _showCellProbability(int row, int col) {
+    // Only show probability analysis if probability mode is enabled
+    if (!_probabilityModeEnabled) {
+      // Show a hint to enable probability mode
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Enable Probability Mode first (analytics button)"),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    
+    final gameProvider = context.read<GameProvider>();
+    final cell = gameProvider.gameState?.getCell(row, col);
+    
+    if (cell == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("No cell data for ($row, $col)")),
+      );
+      return;
+    }
+    
+    if (cell.isRevealed) {
+      // Show revealed cell info in probability mode
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Cell ($row, $col) is revealed - value: ${cell.bombsAround}"),
+          duration: const Duration(seconds: 2),
+          backgroundColor: Colors.green,
+        ),
+      );
+      return;
+    }
+    
+    if (cell.isFlagged) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Cell ($row, $col) is flagged")),
+      );
+      return;
+    }
+    
+    // Calculate real probability for this cell
+    final probability = gameProvider.calculateCellProbability(row, col);
+    final probabilityPercent = (probability * 100).toStringAsFixed(1);
+    
+    // Get detailed debug information
+    final debugInfo = gameProvider.debugProbabilityCalculation(row, col);
+    
+    // Log debug info to terminal for easy sharing
+    print('🔍🔍🔍 PROBABILITY ANALYSIS FOR CELL ($row, $col) 🔍🔍🔍');
+    print('🔍 Probability: $probabilityPercent%');
+    print('🔍 Debug info: $debugInfo');
+    
+    // Set highlighting for all cells that factored into the calculation
+    gameProvider.setProbabilityHighlight(row, col);
+    
+    // Show probability in snackbar
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Cell ($row, $col): $probabilityPercent% probability'),
+        duration: const Duration(seconds: 3),
+        backgroundColor: probability > 0.4 && probability < 0.6 ? Colors.orange : Colors.blue,
+        action: SnackBarAction(
+          label: 'Details',
+          onPressed: () {
+            // Show detailed dialog with debug information
+            showDialog(
+              context: context,
+              barrierDismissible: true, // Allow tapping outside to close
+              builder: (context) => AlertDialog(
+                title: Row(
+                  children: [
+                    Expanded(child: Text('Cell ($row, $col) Analysis')),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+                content: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Probability: $probabilityPercent%', 
+                           style: TextStyle(
+                             fontSize: 18, 
+                             fontWeight: FontWeight.bold,
+                             color: probability > 0.4 && probability < 0.6 ? Colors.orange : Colors.black,
+                           )),
+                      const SizedBox(height: 16),
+                      if (debugInfo.containsKey('targetCell')) ...[
+                        Text('Target cell: (${debugInfo['targetCell']['row']}, ${debugInfo['targetCell']['col']})'),
+                        Text('Has bomb: ${debugInfo['targetCell']['hasBomb']}'),
+                        const SizedBox(height: 8),
+                      ],
+                      if (debugInfo.containsKey('calculation')) ...[
+                        Text('Calculation:'),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('• Contributing neighbors: ${debugInfo['calculation']['contributingNeighbors']}'),
+                              Text('• Total probability: ${debugInfo['calculation']['totalProbability'].toStringAsFixed(3)}'),
+                              Text('• Final probability: ${debugInfo['calculation']['finalProbability'].toStringAsFixed(3)}'),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                      if (debugInfo.containsKey('revealedNeighbors') && debugInfo['revealedNeighbors'].isNotEmpty) ...[
+                        Text('Revealed neighbors:'),
+                        ...debugInfo['revealedNeighbors'].expand((neighborList) => neighborList).map((neighbor) => Padding(
+                          padding: const EdgeInsets.only(left: 16, top: 4),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('• (${neighbor['position'][0]}, ${neighbor['position'][1]}): value ${neighbor['value']}'),
+                              Text('  - Needs ${neighbor['remainingMines']} mines from ${neighbor['unrevealedNeighbors'].length} cells'),
+                              Text('  - Probability: ${(neighbor['probability'] * 100).toStringAsFixed(1)}%'),
+                              if (neighbor['unrevealedNeighbors'].isNotEmpty)
+                                Text('  - Unrevealed: ${neighbor['unrevealedNeighbors'].map((pos) => '(${pos[0]}, ${pos[1]})').join(', ')}'),
+                              if (neighbor['flaggedNeighbors'].isNotEmpty)
+                                Text('  - Flagged: ${neighbor['flaggedNeighbors'].map((pos) => '(${pos[0]}, ${pos[1]})').join(', ')}'),
+                            ],
+                          ),
+                        )),
+                      ],
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Close'),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    
+    // Clear highlighting after 5 seconds
+    Future.delayed(const Duration(seconds: 5), () {
+      gameProvider.clearProbabilityHighlight();
+    });
+  }
+
+  void _saveBoardStateForDebug() {
+    final gameProvider = context.read<GameProvider>();
+    gameProvider.saveBoardStateForDebug();
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Board state saved - check console for details"),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _debugSpecificCase() {
+    final gameProvider = context.read<GameProvider>();
+    gameProvider.debugSpecificCase();
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Cell (4,0) case debugged - check console for details"),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
   void _showSettings() {
     Navigator.of(context).push(
       MaterialPageRoute(
