@@ -201,6 +201,7 @@ class SettingsProvider extends ChangeNotifier {
   // Set kickstarter mode independently
   void setKickstarterMode(bool isKickstarterMode) {
     _isFirstClickGuaranteeEnabled = isKickstarterMode;
+    _isClassicMode = !isKickstarterMode; // Update classic mode as well
     
     // Update feature flags
     FeatureFlags.enableFirstClickGuarantee = _isFirstClickGuaranteeEnabled;
