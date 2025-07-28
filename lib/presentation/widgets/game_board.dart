@@ -26,6 +26,7 @@ class _GameBoardState extends State<GameBoard> {
   double? _lastAvailableHeight;
   int? _lastRows;
   int? _lastColumns;
+  Orientation? _lastOrientation;
   static const double _epsilon = 0.5; // Acceptable pixel error
   
   // Add scroll controllers to maintain scroll position
@@ -91,6 +92,13 @@ class _GameBoardState extends State<GameBoard> {
     });
   }
 
+  /// Calculate cell size based on available dimensions and board size
+  /// Uses the same algorithm for both vertical and horizontal orientations
+  double _calculateCellSize(int rows, int columns, double availableHeight, double availableWidth, double spacing) {
+    // Use the existing vertical algorithm: (availableHeight - (rows - 1) * spacing) / rows
+    return (availableHeight - (rows - 1) * spacing) / rows;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<GameProvider>(
@@ -102,13 +110,17 @@ class _GameBoardState extends State<GameBoard> {
         final rows = gameState.rows;
         final columns = gameState.columns;
         // Reset cell size and adjustment if board size or available height changes
-        final shouldReset = _lastRows != rows || _lastColumns != columns || _lastAvailableHeight != null && _lastAvailableHeight != MediaQuery.of(context).size.height;
+        final shouldReset = _lastRows != rows || 
+                           _lastColumns != columns || 
+                           _lastAvailableHeight != null && _lastAvailableHeight != MediaQuery.of(context).size.height ||
+                           _lastOrientation != null && _lastOrientation != MediaQuery.of(context).orientation;
         if (shouldReset) {
           _cellSize = null;
           _postLayoutAdjusted = false;
           _lastRows = rows;
           _lastColumns = columns;
           _lastAvailableHeight = MediaQuery.of(context).size.height;
+          _lastOrientation = MediaQuery.of(context).orientation;
         }
         return Column(
           children: [
@@ -117,8 +129,9 @@ class _GameBoardState extends State<GameBoard> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final availableHeight = constraints.maxHeight;
+                  final availableWidth = constraints.maxWidth;
                   final spacing = 2.0 * _zoomLevel;
-                  final cellSize = _cellSize ?? (availableHeight - (rows - 1) * spacing) / rows;
+                  final cellSize = _cellSize ?? _calculateCellSize(rows, columns, availableHeight, availableWidth, spacing);
                   final boardHeight = cellSize * rows + (rows - 1) * spacing;
                   final boardWidth = columns * cellSize + (columns - 1) * spacing;
                   // Feedback loop: measure and adjust after first layout
