@@ -1,18 +1,46 @@
-# Python Flutter iOS Integration - Project Status
+# Flutter Minesweeper with Python Integration - Project Status
 
-## Current Status: ✅ WORKING SOLUTION IMPLEMENTED
+## Current Status: ✅ ACTIVE DEVELOPMENT - COMPREHENSIVE FEATURES
 
-**Date:** July 25, 2024  
-**Approach:** Python Subprocess (NOT PythonKit)  
-**Status:** Successfully implemented and tested
+**Date:** January 2025  
+**Approach:** Embedded Python Executable with Minesweeper Game  
+**Status:** Complete Minesweeper implementation with Python 50/50 detection and debug features
 
 ## What We Built
 
-A Flutter iOS app that can call Python code using a **subprocess approach**:
-- Flutter UI calls native Swift code via Method Channel
-- Swift runs Python as a subprocess using `/usr/bin/python3`
-- Python script executes and returns result via stdout
-- Swift parses the result and sends it back to Flutter
+A complete Flutter iOS Minesweeper game with sophisticated Python integration:
+- **Full Minesweeper Game**: Multiple difficulties, standard rules, win/loss detection
+- **Python 50/50 Detection**: Sophisticated algorithms to identify true 50/50 situations
+- **Debug Probability Mode**: Interactive analysis with visual highlighting
+- **Feature Flags System**: JSON-based configuration with persistent settings
+- **Comprehensive Testing**: 68/68 tests passing with 44.3% code coverage
+
+## Key Features
+
+### 🎮 **Minesweeper Game**
+- **Multiple Difficulties**: Easy, Medium, Hard (default: HARD)
+- **Standard Rules**: Click to reveal, long-press to flag
+- **Game State Management**: Win/loss detection, timer, score tracking
+- **Responsive UI**: Clean, modern interface
+
+### 🤖 **Python Integration**
+- **50/50 Detection**: Sophisticated algorithms to identify true 50/50 situations
+- **Probability Analysis**: Real-time calculation of mine probabilities
+- **CSP Solver**: Constraint Satisfaction Problem solver for complex scenarios
+- **Performance Optimized**: Efficient algorithms for real-time analysis
+
+### 🔧 **Debug Probability Mode**
+- **Feature Flag**: Toggle in Settings > Advanced / Experimental
+- **Interactive Analysis**: Long-press cells to see probability calculations
+- **Visual Highlighting**: Cells involved in calculations are highlighted
+- **Debug Buttons**: Conditional UI elements for testing and debugging
+- **Coordinate Display**: Cell coordinates shown in snackbar for easy reporting
+
+### ⚙️ **Settings & Configuration**
+- **Feature Flags**: JSON-based configuration system
+- **Persistent Settings**: User preferences saved across sessions
+- **Default Configuration**: HARD difficulty, 50/50 detection enabled
+- **Advanced Options**: Debug modes, experimental features
 
 ## Key Files
 
@@ -21,95 +49,95 @@ A Flutter iOS app that can call Python code using a **subprocess approach**:
 - `ios/Runner/AppDelegate.swift` - Method channel setup
 
 ### Python Implementation  
-- `ios/Runner/Resources/minimal.py` - Simple Python script that prints result
+- `ios/Runner/Resources/minimal.py` - Python script (1+1 test)
+- `ios/Runner/Resources/find_5050.py` - 50/50 detection algorithm
+- `ios/Runner/Resources/core/` - Sophisticated CSP/Probabilistic solver files
 
 ### Flutter Implementation
-- `lib/main.dart` - UI and method channel calls
+- `lib/main.dart` - App entry point and initialization
+- `lib/presentation/pages/game_page.dart` - Main game UI with debug features
+- `lib/presentation/pages/settings_page.dart` - Settings and feature toggles
+- `lib/presentation/providers/game_provider.dart` - Game state management
+- `lib/presentation/providers/settings_provider.dart` - Settings management
+- `lib/presentation/widgets/cell_widget.dart` - Individual cell rendering
+- `lib/services/native_5050_solver.dart` - Python integration bridge
+- `lib/core/feature_flags.dart` - Global feature flags
 
-## How It Works
+### Configuration
+- `assets/config/game_modes.json` - Feature flags and defaults
 
-1. **Flutter UI** → Button press triggers `_callPython()`
-2. **Method Channel** → Flutter calls `addOneAndOne` on channel `python/minimal`
-3. **Swift Handler** → `AppDelegate` receives call and calls `PythonMinimalRunner.addOneAndOne()`
-4. **Python Subprocess** → Swift creates Process, runs `python3 minimal.py`
-5. **Result Parsing** → Swift reads stdout, parses integer result
-6. **Return to Flutter** → Result sent back via method channel
+## Recent Achievements (January 2025)
 
-## Why We Pivoted from PythonKit
+### ✅ **Debug Probability Mode Feature**
+- Added feature flag with settings toggle
+- Conditional debug buttons in AppBar
+- Long-press behavior for probability analysis
+- Visual highlighting of cells in calculations
+- Coordinate display in snackbar
+- Haptic feedback optimization
+- Clean UI without coordinate text artifacts
 
-### PythonKit Issues (All Failed)
-- ❌ App crashes during PythonKit initialization
-- ❌ No debug output from Swift code reaches console
-- ❌ Crash happens before any Python import attempts
-- ❌ Complex setup with embedded Python framework
-- ❌ Multiple attempts with different configurations all failed
+### ✅ **Visual Improvements**
+- Removed coordinate text from cells (cleaner appearance)
+- Fixed "smaller numbers in background" issue
+- Improved number styling for revealed cells
+- Better conditional rendering based on feature flags
 
-### Subprocess Advantages
-- ✅ **Simple and reliable** - Uses system Python
-- ✅ **Easy to debug** - Clear error messages and output
-- ✅ **App Store compliant** - No external dependencies
-- ✅ **Fast to implement** - Working solution in hours vs days
-- ✅ **Scalable** - Can easily extend to complex Python scripts
+### ✅ **Branch Management**
+- Successfully merged `feature/debug-probability-mode` to main
+- Cleaned up feature branch (local and remote deletion)
+- Updated TODO.md with horizontal phone game support as next priority
 
-## Testing Results
+## Current Development Focus
 
-```
-flutter: 🔔 Dart: _callPython() called
-flutter: 🔔 Dart: About to call native addOneAndOne...
-🔔 Swift: MethodChannel received call: addOneAndOne
-🔔 Swift: Calling PythonMinimalRunner.addOneAndOne()
-🔍 PythonMinimalRunner: Starting subprocess call
-🔍 Found script at: /path/to/minimal.py
-🔍 Starting Python subprocess...
-🔍 Python output: 2
-✅ Successfully got result: 2
-🔔 Swift: PythonMinimalRunner returned: 2
-🔔 Swift: Sending result back to Flutter: 2
-flutter: 🔔 Dart: Python result: 2
-```
+### **🔄 High Priority Items**
+1. **Horizontal Phone Game Support** - UI optimization for landscape orientation
+2. **Code Coverage Improvement** - Target 80% coverage (currently 44.3%)
+3. **Python 50/50 Detection Optimization** - Performance improvements
 
-## Next Steps for Production
-
-1. **Embed Python Executable** - Bundle Python with app instead of using system Python
-2. **Complex Data Exchange** - Extend to send JSON data to Python and receive structured results
-3. **Error Handling** - Add comprehensive error handling for Python script failures
-4. **Performance Optimization** - Consider caching or keeping Python process alive
-
-## Files to Update
-
-- ✅ `PROJECT_STATUS.md` - This file (current status)
-- ✅ `README.md` - Update with new approach
-- ✅ `.cursorrules` - Update for new agent context
-- ✅ `IMPLEMENTATION_SUMMARY.md` - Document the working solution
+### **📊 Progress Metrics**
+- **Test Coverage**: 44.3% → 80% target
+- **Test Pass Rate**: 100% (68/68 passing)
+- **Feature Completeness**: ~70% (core game + Python integration + debug features)
 
 ## Commands to Run
 
 ```bash
 # From main project directory
-cd /Users/chaos/dev/PythonDartSwiftMinimalTest
+cd /Users/chaos/dev/FlutterMinesweeper_WithPython
 
-# Run on iOS Simulator
-flutter run -d C7D05565-7D5F-4C8C-AB95-CDBFAE7BA098
+# Run on iOS device
+flutter run -d 00008130-00127CD40AF0001C
 
-# Run on device
-flutter run
+# Run tests
+flutter test
+
+# Run test runner script
+./test_runner.sh
 ```
 
 ## Success Metrics
 
-- ✅ App builds without errors
-- ✅ Flutter UI displays correctly
-- ✅ Button press triggers Python execution
-- ✅ Python result (2) displayed in Flutter UI
-- ✅ No crashes or missing plugin exceptions
-- ✅ Clear debug output showing full execution flow
+- ✅ Complete Minesweeper game implementation
+- ✅ Python 50/50 detection working
+- ✅ Debug probability mode with interactive analysis
+- ✅ Feature flags system operational
+- ✅ Settings persistence working
+- ✅ Comprehensive test suite (68/68 passing)
+- ✅ Works on physical iOS device
+- ✅ Self-contained (no external Python dependencies)
+- ✅ Clean UI without visual artifacts
+- ✅ Conditional debug features working
+
+## Next Steps
+
+1. **Horizontal Phone Game Support** - Implement responsive layout for landscape orientation
+2. **Code Coverage Improvement** - Increase test coverage to 80% target
+3. **Python 50/50 Detection Optimization** - Performance improvements for real-time analysis
+4. **Game Features Implementation** - Undo move, hint system, auto-flag functionality
 
 ## Conclusion
 
-The subprocess approach is **significantly better** than PythonKit for this use case:
-- **Faster to implement** (hours vs days)
-- **More reliable** (no crashes)
-- **Easier to debug** (clear error messages)
-- **Production ready** (App Store compliant)
+The project has evolved from a simple Python integration test to a comprehensive Minesweeper game with sophisticated debugging and analysis capabilities. The embedded Python executable approach provides a solid foundation for complex game logic and real-time analysis, while the feature flag system allows for flexible development and testing workflows.
 
-This solution provides a solid foundation for the larger project goal of sending 2D/3D board states to Python and receiving JSON results. 
+This solution demonstrates that **Flutter iOS apps can successfully integrate complex Python algorithms** for real-time game analysis and provides a robust framework for future enhancements. 

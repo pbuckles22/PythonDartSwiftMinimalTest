@@ -14,7 +14,17 @@
 
 ### **🚀 HIGH PRIORITY (Next Sprint)**
 
-2. **Code Coverage Improvement: 80% Target**
+2. **Horizontal Phone Game Support**
+   - **Issue**: Game UI not optimized for horizontal/landscape orientation
+   - **Impact**: Poor user experience on phones in landscape mode
+   - **Effort**: Medium (1-2 days)
+   - **Tasks**:
+     - Implement responsive layout for landscape orientation
+     - Adjust board sizing and positioning for horizontal screens
+     - Optimize UI elements (buttons, settings, etc.) for landscape
+     - Test on various phone sizes in landscape mode
+
+3. **Code Coverage Improvement: 80% Target**
    - **Current**: 44.3% overall coverage
    - **Target**: 80% per file
    - **Priority Files**:
@@ -26,7 +36,7 @@
    - **Impact**: Better code quality, fewer bugs, easier maintenance
    - **Effort**: High (2-3 days)
 
-3. **Python 50/50 Detection Integration**
+4. **Python 50/50 Detection Integration**
    - **Status**: ✅ Core functionality working
    - **Next**: Integrate with actual game state
    - **Add**: Comprehensive error handling for Python failures
@@ -36,7 +46,7 @@
 
 ### **📋 MEDIUM PRIORITY (This Month)**
 
-4. **Game Features Implementation**
+5. **Game Features Implementation**
    - **Kickstarter Mode Logic**: First click guarantee functionality
    - **Undo Move**: Allow players to undo their last move
    - **Hint System**: Provide hints for stuck players
@@ -45,7 +55,7 @@
    - **Impact**: Enhanced user experience
    - **Effort**: High (3-5 days)
 
-5. **Testing Infrastructure**
+6. **Testing Infrastructure**
    - **Integration Tests**: Python integration end-to-end tests
    - **Widget Tests**: UI component testing
    - **Performance Tests**: Load testing for large boards
@@ -55,7 +65,7 @@
 
 ### **🔧 LOW PRIORITY (Future Sprints)**
 
-6. **Technical Improvements**
+7. **Technical Improvements**
    - **Logging System**: Comprehensive debugging and monitoring
    - **Performance Optimization**: App speed and memory usage
    - **Error Handling**: Graceful failure handling throughout app
@@ -63,7 +73,7 @@
    - **Impact**: Developer experience and app stability
    - **Effort**: Medium (2-4 days)
 
-7. **Documentation & Polish**
+8. **Documentation & Polish**
    - **API Documentation**: Document all public methods
    - **User Guide**: In-app help and tutorials
    - **Code Comments**: Improve code readability

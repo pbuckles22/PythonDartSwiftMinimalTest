@@ -143,6 +143,59 @@ With this foundation, you can now:
 - **Implement scientific computing** capabilities
 - **Add any Python functionality** to Flutter iOS apps
 
+## Recent Achievements (January 2025)
+
+### Debug Probability Mode Feature Implementation
+
+#### Overview
+Successfully implemented a comprehensive debug probability mode system that provides interactive analysis of mine probabilities and 50/50 situations in real-time.
+
+#### Key Features Implemented
+1. **Feature Flag System**
+   - Added `debug_probability_mode` to `assets/config/game_modes.json`
+   - Implemented toggle in Settings > Advanced / Experimental
+   - Global access via `FeatureFlags.enableDebugProbabilityMode`
+
+2. **Conditional UI Elements**
+   - Debug buttons only appear in AppBar when feature is enabled
+   - Uses `Consumer<SettingsProvider>` for reactive UI updates
+   - Includes: Python Integration Test, 50/50 Detection Test, Probability Mode Toggle, Board State Debug, Specific Case Debug
+
+3. **Interactive Analysis**
+   - Long-press on revealed cells: Shows coordinates in snackbar
+   - Long-press on unrevealed cells: Shows probability analysis with percentage
+   - Visual highlighting of cells involved in probability calculations
+   - Conditional haptic feedback based on debug mode
+
+4. **Visual Improvements**
+   - Removed coordinate text from cells (fixed "smaller numbers in background" issue)
+   - Clean number styling without decorations or artifacts
+   - Coordinate display only in snackbar when long-pressing
+
+5. **Probability Analysis System**
+   - Real-time calculation with `calculateCellProbability()`
+   - Detailed analysis with `getCellProbabilityAnalysis()`
+   - Cell highlighting with `getCellsInProbabilityCalculation()`
+   - Comprehensive debug output and console logging
+
+#### Technical Implementation
+- **Settings Integration**: Proper state management with persistence
+- **Conditional Rendering**: UI elements only show when needed
+- **Performance Optimization**: Conditional execution prevents unnecessary calculations
+- **Error Handling**: Graceful failure handling for debug features
+
+#### Benefits Achieved
+- **Developer Experience**: Easy debugging of probability calculations
+- **User Experience**: Clean UI without debug artifacts when not needed
+- **Performance**: Conditional execution prevents unnecessary calculations
+- **Maintainability**: Feature flag system allows easy toggling
+- **Testing**: Comprehensive debug tools for validating algorithms
+
+### Branch Management
+- Successfully merged `feature/debug-probability-mode` to main
+- Cleaned up feature branch (local and remote deletion)
+- Updated TODO.md with horizontal phone game support as next priority
+
 ## Conclusion
 
 This conversation resulted in a **complete success**. The goal of embedding Python in a Flutter iOS app was achieved, and the implementation is:

@@ -46,11 +46,17 @@ The project is being developed in "chunks":
 - ✅ Feature flags system
 - ✅ Settings persistence
 - ✅ Comprehensive test framework
+- ✅ **Debug Probability Mode** - Interactive probability analysis with visual highlighting
+- ✅ **Conditional Debug UI** - Debug buttons only show when feature flag is enabled
+- ✅ **Long-press Behavior** - Coordinates shown in snackbar, probability analysis on cells
+- ✅ **Visual Improvements** - Clean UI without coordinate text artifacts
+- ✅ **Haptic Feedback Optimization** - Only triggers when appropriate
 
 ### What Doesn't Work (Issues)
 - ❌ Some test failures due to Flutter binding initialization
 - ❌ Settings provider tests need adjustment for actual behavior
 - ❌ Game provider tests need proper game state initialization
+- ❌ **Horizontal phone game support** - UI not optimized for landscape orientation
 
 ## Key Implementation Files
 
@@ -275,6 +281,98 @@ flutter run
 │   └── game_modes.json            ← Feature flags and defaults
 └── [documentation files]
 ```
+
+## Debug Probability Mode Features
+
+### Overview
+The debug probability mode is a comprehensive debugging and analysis system that allows developers and advanced users to interactively analyze mine probabilities and 50/50 situations in real-time.
+
+### Key Components
+
+#### 1. Feature Flag System
+- **Configuration**: `debug_probability_mode` in `assets/config/game_modes.json`
+- **Toggle**: Available in Settings > Advanced / Experimental
+- **Persistence**: Setting saved across app sessions
+- **Global Access**: `FeatureFlags.enableDebugProbabilityMode`
+
+#### 2. Conditional UI Elements
+- **Debug Buttons**: Only appear in AppBar when feature is enabled
+  - Python Integration Test
+  - 50/50 Detection Test
+  - Probability Mode Toggle
+  - Board State Debug
+  - Specific Case Debug (cell 4,0)
+- **Consumer Widget**: `Consumer<SettingsProvider>` ensures UI updates when setting changes
+
+#### 3. Interactive Analysis
+- **Long-press Behavior**: 
+  - **Revealed cells**: Show coordinates in snackbar
+  - **Unrevealed cells**: Show probability analysis with percentage
+- **Visual Highlighting**: Cells involved in probability calculations are highlighted
+- **Haptic Feedback**: Only triggered when debug mode is enabled or for valid actions
+
+#### 4. Probability Analysis System
+- **Real-time Calculation**: `calculateCellProbability()` method in GameProvider
+- **Detailed Analysis**: `getCellProbabilityAnalysis()` provides comprehensive debug info
+- **Cell Highlighting**: `getCellsInProbabilityCalculation()` identifies contributing cells
+- **Debug Output**: Console logging for detailed analysis
+
+#### 5. Visual Improvements
+- **Clean UI**: Removed coordinate text from cells (no more "smaller numbers in background")
+- **Number Styling**: Plain colored numbers without decorations or artifacts
+- **Coordinate Display**: Only shown in snackbar when long-pressing
+
+### Implementation Details
+
+#### Settings Integration
+```dart
+// SettingsProvider
+bool _isDebugProbabilityModeEnabled = false;
+bool get isDebugProbabilityModeEnabled => _isDebugProbabilityModeEnabled;
+
+void toggleDebugProbabilityMode() {
+  _isDebugProbabilityModeEnabled = !_isDebugProbabilityModeEnabled;
+  FeatureFlags.enableDebugProbabilityMode = _isDebugProbabilityModeEnabled;
+  _saveSettings();
+  notifyListeners();
+}
+```
+
+#### Conditional UI Rendering
+```dart
+// GamePage AppBar
+Consumer<SettingsProvider>(
+  builder: (context, settingsProvider, child) {
+    if (settingsProvider.isDebugProbabilityModeEnabled) {
+      return Row(/* debug buttons */);
+    }
+    return const SizedBox.shrink();
+  },
+),
+```
+
+#### Long-press Behavior
+```dart
+// CellWidget
+if (settingsProvider.isDebugProbabilityModeEnabled || gameProvider.isValidAction(row, col)) {
+  HapticService.mediumImpact();
+}
+
+if (onProbabilityAnalysis != null) {
+  onProbabilityAnalysis!();
+} else {
+  if (gameProvider.isValidAction(row, col)) {
+    onLongPress();
+  }
+}
+```
+
+### Benefits
+- **Developer Experience**: Easy debugging of probability calculations
+- **User Experience**: Clean UI without debug artifacts when not needed
+- **Performance**: Conditional execution prevents unnecessary calculations
+- **Maintainability**: Feature flag system allows easy toggling
+- **Testing**: Comprehensive debug tools for validating algorithms
 
 ## Conclusion
 
