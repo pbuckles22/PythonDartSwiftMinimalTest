@@ -123,9 +123,29 @@ import PythonKit
     
     @objc static func find5050Situations(probabilityMap: [String: Double]) -> [[Int]]? {
         print("🔍 PythonMinimalRunner: Starting 50/50 detection")
+        print("🔍 Input probability map: \(probabilityMap)")
         
         // Trigger the one-time initialization by accessing the static property.
         _ = initializePython
+        
+        // First, let's check what's actually in the bundle
+        print("🔍 Checking bundle contents...")
+        let bundlePath = Bundle.main.bundlePath
+        let fileManager = FileManager.default
+        
+        if let enumerator = fileManager.enumerator(atPath: bundlePath) {
+            var foundFind5050 = false
+            for case let path as String in enumerator {
+                if path.hasSuffix("find_5050.py") {
+                    print("🔍 Found find_5050.py at: \(path)")
+                    foundFind5050 = true
+                    break
+                }
+            }
+            if !foundFind5050 {
+                print("❌ find_5050.py not found in bundle!")
+            }
+        }
         
         // Set up Python path to include the bundled Python files
         let sys = Python.import("sys")
@@ -153,28 +173,112 @@ import PythonKit
             }
         } else {
             print("❌ Could not find Resources path for 50/50 detection")
+            print("❌ Tried paths:")
+            for (i, path) in possiblePaths.enumerated() {
+                print("   \(i+1). \(path ?? "nil")")
+            }
+            
+            // Fallback: try to find find_5050.py directly in the bundle
+            print("🔍 Trying fallback: searching for find_5050.py in bundle...")
+            
+            if let enumerator = fileManager.enumerator(atPath: bundlePath) {
+                for case let path as String in enumerator {
+                    if path.hasSuffix("find_5050.py") {
+                        let fullPath = bundlePath.appending("/\(path)")
+                        let directory = fullPath.replacingOccurrences(of: "/find_5050.py", with: "")
+                        print("🔍 Found find_5050.py at: \(fullPath)")
+                        print("🔍 Adding directory to sys.path: \(directory)")
+                        sys.path.insert(0, PythonObject(directory))
+                        resourcePath = directory
+                        break
+                    }
+                }
+            }
+            
+            if resourcePath == nil {
+                print("❌ Still could not find find_5050.py in bundle")
+                return nil
+            }
+        }
+        
+        // Check if find_5050.py exists in the resource path
+        let find5050Path = resourcePath! + "/find_5050.py"
+        if FileManager.default.fileExists(atPath: find5050Path) {
+            print("✅ Found find_5050.py at: \(find5050Path)")
+        } else {
+            print("❌ find_5050.py not found at: \(find5050Path)")
             return nil
         }
         
         // Import the find_5050 module and call the function
         print("🔍 Attempting to import find_5050 module...")
-        let pyModule = Python.import("find_5050")
-        print("🔍 Successfully imported find_5050 module")
-        
-        // Convert Swift dictionary to Python dictionary
-        let pyProbabilityMap = PythonObject(probabilityMap)
-        print("🔍 Converted probability map to Python object")
-        
-        print("🔍 Calling find_5050_situations()...")
-        let pyResult = pyModule.find_5050_situations(pyProbabilityMap)
-        print("🔍 Got result from Python: \(pyResult)")
-        
-        // Convert Python result back to Swift array
-        if let resultArray = Array(pyResult) as? [[Int]] {
-            print("✅ Successfully got 50/50 result from Python: \(resultArray)")
-            return resultArray
-        } else {
-            print("❌ Failed to convert Python result to Swift array")
+        do {
+            let pyModule = Python.import("find_5050")
+            print("🔍 Successfully imported find_5050 module")
+            
+            // Convert Swift dictionary to Python dictionary
+            let pyProbabilityMap = PythonObject(probabilityMap)
+            print("🔍 Converted probability map to Python object: \(pyProbabilityMap)")
+            
+            print("🔍 Calling find_5050_situations()...")
+            let pyResult = pyModule.find_5050_situations(pyProbabilityMap)
+            print("🔍 Got result from Python: \(pyResult)")
+            print("🔍 Result type: \(type(of: pyResult))")
+            
+            // Convert Python result back to Swift array
+            print("🔍 Attempting to convert Python result to Swift array...")
+            print("🔍 Python result: \(pyResult)")
+            print("🔍 Python result type: \(type(of: pyResult))")
+            
+            // Try to convert the PythonObject to a Swift array
+            if let resultArray = Array(pyResult) as? [[Int]] {
+                print("✅ Successfully got 50/50 result from Python: \(resultArray)")
+                return resultArray
+            } else {
+                // Try alternative conversion methods
+                print("🔍 First conversion failed, trying alternative methods...")
+                
+                // Method 1: Try to iterate and convert manually
+                let pyList = Array(pyResult)
+                print("🔍 Got Python list: \(pyList)")
+                var swiftArray: [[Int]] = []
+                
+                for item in pyList {
+                    print("🔍 Processing item: \(item), type: \(type(of: item))")
+                    let innerList = Array(item)
+                    print("🔍 Inner list: \(innerList)")
+                    
+                    var innerSwiftArray: [Int] = []
+                    for innerItem in innerList {
+                        if let intValue = Int(innerItem) {
+                            innerSwiftArray.append(intValue)
+                        } else {
+                            print("❌ Failed to convert inner item to Int: \(innerItem)")
+                        }
+                    }
+                    
+                    if !innerSwiftArray.isEmpty {
+                        swiftArray.append(innerSwiftArray)
+                        print("🔍 Added inner array: \(innerSwiftArray)")
+                    }
+                }
+                
+                if !swiftArray.isEmpty {
+                    print("✅ Successfully converted using manual method: \(swiftArray)")
+                    return swiftArray
+                }
+                
+                // Method 2: Try to convert to string and parse
+                let resultString = String(pyResult)
+                print("🔍 Result as string: \(resultString)")
+                
+                print("❌ All conversion methods failed")
+                print("❌ Result was: \(pyResult)")
+                print("❌ Result type: \(type(of: pyResult))")
+                return nil
+            }
+        } catch {
+            print("❌ Error importing find_5050 module: \(error)")
             return nil
         }
     }

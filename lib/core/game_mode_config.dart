@@ -62,7 +62,7 @@ class GameModeConfig {
   static bool _isLoaded = false;
   
   // Feature defaults
-  static bool _defaultKickstarterMode = false;
+  static bool _defaultKickstarterMode = true;
   static bool _default5050Detection = false;
   static bool _default5050SafeMove = false;
 
@@ -89,8 +89,10 @@ class GameModeConfig {
   Future<void> loadGameModes() async {
     if (_isLoaded) return;
 
+    print('DEBUG: GameModeConfig: Starting loadGameModes()');
     try {
       final String jsonString = await rootBundle.loadString('assets/config/game_modes.json');
+      print('DEBUG: GameModeConfig: Successfully loaded JSON string, length: ${jsonString.length}');
       // print('GameModeConfig: Raw JSON string:');
       // print(jsonString);
       final Map<String, dynamic> json = jsonDecode(jsonString);
@@ -132,30 +134,36 @@ class GameModeConfig {
       if (json.containsKey('defaults')) {
         final defaults = json['defaults'] as Map<String, dynamic>;
         _defaultMode = defaults['game_mode'] as String;
+        print('DEBUG: GameModeConfig: Found defaults section, game_mode = $_defaultMode');
         
         if (defaults.containsKey('features')) {
           final features = defaults['features'] as Map<String, dynamic>;
+          print('DEBUG: GameModeConfig: Found features section: $features');
           _defaultKickstarterMode = features['kickstarter_mode'] as bool? ?? false;
           _default5050Detection = features['5050_detection'] as bool? ?? false;
           _default5050SafeMove = features['5050_safe_move'] as bool? ?? false;
           // Store all feature flags
           _defaultFeatureFlags = features.map((k, v) => MapEntry(k, v as bool? ?? false));
+          print('DEBUG: GameModeConfig: _defaultFeatureFlags = $_defaultFeatureFlags');
+        } else {
+          print('DEBUG: GameModeConfig: No features section found in defaults');
         }
       } else {
         // Fallback to old structure
         _defaultMode = json['default_mode'] as String? ?? 'easy';
+        print('DEBUG: GameModeConfig: No defaults section, using fallback game_mode = $_defaultMode');
       }
       
       _isLoaded = true;
       // print('GameModeConfig: Loaded ${_gameModes.length} game modes from JSON');
     } catch (e) {
-      // print('GameModeConfig: Failed to load JSON. Error: $e');
+      print('DEBUG: GameModeConfig: Failed to load JSON. Error: $e');
       if (e is ArgumentError) {
         // Re-throw validation errors so they're visible
         rethrow;
       }
       // Only fall back for other types of errors (file not found, JSON parse errors, etc.)
-      // print('GameModeConfig: Using fallback modes due to non-validation error');
+      print('DEBUG: GameModeConfig: Using fallback modes due to non-validation error');
       _loadDefaultModes();
       _isLoaded = true;
     }
@@ -219,7 +227,7 @@ class GameModeConfig {
     
     // Use safe fallback values for features (false = disabled)
     // This ensures the app doesn't crash if JSON is invalid
-    _defaultKickstarterMode = false;
+    _defaultKickstarterMode = true;
     _default5050Detection = false;
     _default5050SafeMove = false;
   }

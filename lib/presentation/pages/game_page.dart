@@ -49,7 +49,8 @@ class _GamePageState extends State<GamePage> {
             icon: const Icon(Icons.psychology),
             onPressed: _test5050Detection,
             tooltip: "Test 50/50 Detection",
-          ),          IconButton(
+          ),
+          IconButton(
             icon: const Icon(Icons.settings),
             onPressed: _showSettings,
           ),
@@ -147,33 +148,31 @@ class _GamePageState extends State<GamePage> {
 
   void _test5050Detection() async {
     print("🔔 Dart: _test5050Detection() called from GamePage");
-    const pythonChannel = MethodChannel("python/minimal");
     
-    // Create a test probability map with some 50/50 situations
-    final testProbabilityMap = {
-      "(0, 0)": 0.5,
-      "(1, 1)": 0.3,
-      "(2, 2)": 0.5,
-      "(3, 3)": 0.8,
-    };
+    final gameProvider = context.read<GameProvider>();
+    
+    // Use the real game state instead of test data
+    if (gameProvider.gameState == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No game state available")),
+      );
+      return;
+    }
     
     try {
-      final result = await pythonChannel.invokeMethod("find5050Situations", {
-        "probabilityMap": testProbabilityMap,
-      });
-      print("🔔 Dart: 50/50 detection returned: $result");
+      // Call the real 50/50 detection with actual game state
+      await gameProvider.updateFiftyFiftyDetection();
+      
+      final fiftyFiftyCells = gameProvider.fiftyFiftyCells;
+      print("🔔 Dart: Real 50/50 detection found ${fiftyFiftyCells.length} cells: $fiftyFiftyCells");
+      
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("50/50 Test: Found ${(result as List).length} cells")),
-      );
-    } on PlatformException catch (e) {
-      print("🔔 Dart: PlatformException: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("50/50 Error: ${e.message}")),
+        SnackBar(content: Text("50/50 Detection: Found ${fiftyFiftyCells.length} cells")),
       );
     } catch (e) {
-      print("🔔 Dart: Unexpected error: $e");
+      print("🔔 Dart: 50/50 detection error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Unexpected Error: $e")),
+        SnackBar(content: Text("50/50 Error: $e")),
       );
     }
   }

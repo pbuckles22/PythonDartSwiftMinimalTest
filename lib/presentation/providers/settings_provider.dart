@@ -4,15 +4,15 @@ import '../../core/game_mode_config.dart';
 
 class SettingsProvider extends ChangeNotifier {
   // Game mode settings
-  bool _isFirstClickGuaranteeEnabled = false;
-  bool _isClassicMode = true; // Classic vs Kickstarter mode
+  bool _isFirstClickGuaranteeEnabled = true;
+  bool _isClassicMode = false; // Classic vs Kickstarter mode
   
   // 50/50 detection settings
   bool _is5050DetectionEnabled = false;
   bool _is5050SafeMoveEnabled = false;
   
   // Difficulty settings
-  String _selectedDifficulty = 'easy';
+  String _selectedDifficulty = 'hard'; // Will be overridden by JSON config when loaded
 
   // --- New: User-facing feature flags ---
   bool _isUndoMoveEnabled = false;
@@ -198,6 +198,25 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Set kickstarter mode independently
+  void setKickstarterMode(bool isKickstarterMode) {
+    _isFirstClickGuaranteeEnabled = isKickstarterMode;
+    
+    // Update feature flags
+    FeatureFlags.enableFirstClickGuarantee = _isFirstClickGuaranteeEnabled;
+    
+    _saveSettings();
+    notifyListeners();
+  }
+
+  // Set classic mode independently
+  void setClassicMode(bool isClassicMode) {
+    _isClassicMode = isClassicMode;
+    
+    _saveSettings();
+    notifyListeners();
+  }
+
   // Set difficulty
   void setDifficulty(String difficulty) {
     if (GameModeConfig.instance.hasGameMode(difficulty)) {
@@ -207,7 +226,7 @@ class SettingsProvider extends ChangeNotifier {
     }
   }
 
-  // Load settings from storage (placeholder for now)
+  // Load settings from storage
   void _loadSettings() {
     // TODO: Implement persistent storage
     // For now, read defaults from GameModeConfig (single source of truth)
@@ -232,24 +251,8 @@ class SettingsProvider extends ChangeNotifier {
     _isAutoPlayEnabled = GameModeConfig.instance.defaultAutoPlay;
     _isDifficultyPredictionEnabled = GameModeConfig.instance.defaultDifficultyPrediction;
     
-    // Update feature flags to match loaded settings
-    FeatureFlags.enableFirstClickGuarantee = _isFirstClickGuaranteeEnabled;
-    FeatureFlags.enable5050Detection = _is5050DetectionEnabled;
-    FeatureFlags.enable5050SafeMove = _is5050SafeMoveEnabled;
-    FeatureFlags.enableUndoMove = _isUndoMoveEnabled;
-    FeatureFlags.enableHintSystem = _isHintSystemEnabled;
-    FeatureFlags.enableAutoFlag = _isAutoFlagEnabled;
-    FeatureFlags.enableBoardReset = _isBoardResetEnabled;
-    FeatureFlags.enableCustomDifficulty = _isCustomDifficultyEnabled;
-    FeatureFlags.enableGameStatistics = _isGameStatisticsEnabled;
-    FeatureFlags.enableBestTimes = _isBestTimesEnabled;
-    FeatureFlags.enableDarkMode = _isDarkModeEnabled;
-    FeatureFlags.enableAnimations = _isAnimationsEnabled;
-    FeatureFlags.enableSoundEffects = _isSoundEffectsEnabled;
-    FeatureFlags.enableHapticFeedback = _isHapticFeedbackEnabled;
-    FeatureFlags.enableMLAssistance = _isMLAssistanceEnabled;
-    FeatureFlags.enableAutoPlay = _isAutoPlayEnabled;
-    FeatureFlags.enableDifficultyPrediction = _isDifficultyPredictionEnabled;
+    // Note: Feature flags are set in main.dart from JSON config
+    // We only set the internal state here, not the global feature flags
   }
 
   // Save settings to storage (placeholder for now)
@@ -281,24 +284,8 @@ class SettingsProvider extends ChangeNotifier {
     _isMLAssistanceEnabled = GameModeConfig.instance.defaultMLAssistance;
     _isAutoPlayEnabled = GameModeConfig.instance.defaultAutoPlay;
     _isDifficultyPredictionEnabled = GameModeConfig.instance.defaultDifficultyPrediction;
-    // Update feature flags (this is needed for reset functionality)
-    FeatureFlags.enableFirstClickGuarantee = _isFirstClickGuaranteeEnabled;
-    FeatureFlags.enable5050Detection = _is5050DetectionEnabled;
-    FeatureFlags.enable5050SafeMove = _is5050SafeMoveEnabled;
-    FeatureFlags.enableUndoMove = _isUndoMoveEnabled;
-    FeatureFlags.enableHintSystem = _isHintSystemEnabled;
-    FeatureFlags.enableAutoFlag = _isAutoFlagEnabled;
-    FeatureFlags.enableBoardReset = _isBoardResetEnabled;
-    FeatureFlags.enableCustomDifficulty = _isCustomDifficultyEnabled;
-    FeatureFlags.enableGameStatistics = _isGameStatisticsEnabled;
-    FeatureFlags.enableBestTimes = _isBestTimesEnabled;
-    FeatureFlags.enableDarkMode = _isDarkModeEnabled;
-    FeatureFlags.enableAnimations = _isAnimationsEnabled;
-    FeatureFlags.enableSoundEffects = _isSoundEffectsEnabled;
-    FeatureFlags.enableHapticFeedback = _isHapticFeedbackEnabled;
-    FeatureFlags.enableMLAssistance = _isMLAssistanceEnabled;
-    FeatureFlags.enableAutoPlay = _isAutoPlayEnabled;
-    FeatureFlags.enableDifficultyPrediction = _isDifficultyPredictionEnabled;
+    // Note: Feature flags are set in main.dart from JSON config
+    // We only set the internal state here, not the global feature flags
     _saveSettings();
     notifyListeners();
   }

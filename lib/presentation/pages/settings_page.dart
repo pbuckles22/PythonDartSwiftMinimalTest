@@ -27,6 +27,8 @@ class SettingsPage extends StatelessWidget {
               const SizedBox(height: 8),
               _buildGameModeToggle(context, settingsProvider),
               const SizedBox(height: 8),
+              _buildKickstarterToggle(context, settingsProvider),
+              const SizedBox(height: 8),
               _buildGeneralGameplayToggles(context, settingsProvider),
               const SizedBox(height: 24),
               // Appearance & UX Section
@@ -81,16 +83,16 @@ class SettingsPage extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            settingsProvider.isKickstarterMode ? 'Kickstarter Mode' : 'Classic Mode',
+                            settingsProvider.isClassicMode ? 'Classic Mode' : 'Modern Mode',
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(width: 8),
                           Tooltip(
-                            message: settingsProvider.isKickstarterMode 
-                                ? 'Kickstarter Mode: Your first click will always reveal a cascade (blank area), giving you a meaningful starting position. Mines are intelligently moved to ensure this happens.'
-                                : 'Classic Mode: Traditional Minesweeper rules. Your first click could hit a mine, reveal a single numbered cell, or trigger a cascade. Pure random chance.',
+                            message: settingsProvider.isClassicMode 
+                                ? 'Classic Mode: Traditional Minesweeper rules. Your first click could hit a mine, reveal a single numbered cell, or trigger a cascade. Pure random chance.'
+                                : 'Modern Mode: Enhanced Minesweeper with additional features and improved gameplay.',
                             child: Icon(
                               Icons.help_outline,
                               size: 16,
@@ -101,9 +103,9 @@ class SettingsPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        settingsProvider.isKickstarterMode 
-                            ? 'First click always reveals a cascade'
-                            : 'Classic Minesweeper rules',
+                        settingsProvider.isClassicMode 
+                            ? 'Classic Minesweeper rules'
+                            : 'Enhanced Minesweeper with modern features',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
@@ -112,9 +114,68 @@ class SettingsPage extends StatelessWidget {
                   ),
                 ),
                 Switch(
-                  value: settingsProvider.isFirstClickGuaranteeEnabled,
+                  value: settingsProvider.isClassicMode,
                   onChanged: (value) {
-                    _handleGameModeChange(context, settingsProvider, value);
+                    _handleGameModeChange(context, settingsProvider, !value);
+                  },
+                  activeColor: Theme.of(context).colorScheme.primary,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildKickstarterToggle(BuildContext context, SettingsProvider settingsProvider) {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Kickstarter Mode',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Tooltip(
+                            message: 'Kickstarter Mode: Your first click will always reveal a cascade (blank area), giving you a meaningful starting position. Mines are intelligently moved to ensure this happens.',
+                            child: Icon(
+                              Icons.help_outline,
+                              size: 16,
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'First click always reveals a cascade',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: settingsProvider.isKickstarterMode,
+                  onChanged: (value) {
+                    settingsProvider.setKickstarterMode(value);
                   },
                   activeColor: Theme.of(context).colorScheme.primary,
                 ),
@@ -340,8 +401,8 @@ class SettingsPage extends StatelessWidget {
     GameProvider gameProvider,
     bool newValue,
   ) {
-    // Update settings first
-    settingsProvider.setGameMode(newValue);
+    // Update settings first - only change classic mode, preserve kickstarter
+    settingsProvider.setClassicMode(newValue);
     
     // Force reset repository to ensure it picks up new feature flags
     gameProvider.forceResetRepository();

@@ -37,12 +37,13 @@ void main() async {
     FeatureFlags.enablePerformanceMetrics = featureFlagMap['performance_metrics'] ?? false;
     FeatureFlags.enableTestMode = featureFlagMap['test_mode'] ?? false;
     
-    // print('DEBUG: main - FeatureFlags initialized from JSON:');
-    // print('DEBUG:   enableFirstClickGuarantee: ${FeatureFlags.enableFirstClickGuarantee}');
-    // print('DEBUG:   enable5050Detection: ${FeatureFlags.enable5050Detection}');
-    // print('DEBUG:   enable5050SafeMove: ${FeatureFlags.enable5050SafeMove}');
+    print('DEBUG: main - FeatureFlags initialized from JSON:');
+    print('DEBUG:   Raw featureFlagMap: $featureFlagMap');
+    print('DEBUG:   enableFirstClickGuarantee: ${FeatureFlags.enableFirstClickGuarantee}');
+    print('DEBUG:   enable5050Detection: ${FeatureFlags.enable5050Detection}');
+    print('DEBUG:   enable5050SafeMove: ${FeatureFlags.enable5050SafeMove}');
     
-    // print('Game configuration validation passed');
+    print('Game configuration validation passed');
   } catch (e) {
     // print('CRITICAL ERROR: Game configuration validation failed: $e');
     // print('App will exit due to configuration error.');

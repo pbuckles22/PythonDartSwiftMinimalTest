@@ -27,6 +27,10 @@ class _GameBoardState extends State<GameBoard> {
   int? _lastRows;
   int? _lastColumns;
   static const double _epsilon = 0.5; // Acceptable pixel error
+  
+  // Add scroll controllers to maintain scroll position
+  final ScrollController _horizontalScrollController = ScrollController();
+  final ScrollController _verticalScrollController = ScrollController();
 
   void _debugBoardAndCellSize(int rows, int columns, double expectedCellSize) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -51,6 +55,13 @@ class _GameBoardState extends State<GameBoard> {
         }
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _horizontalScrollController.dispose();
+    _verticalScrollController.dispose();
+    super.dispose();
   }
 
   void _maybeAdjustCellSize(int rows, double availableHeight, double spacing) {
@@ -167,8 +178,10 @@ class _GameBoardState extends State<GameBoard> {
                   // If the board is taller than the available height, allow vertical scrolling
                   if (boardHeight > availableHeight + 0.5) {
                     return SingleChildScrollView(
+                      controller: _horizontalScrollController,
                       scrollDirection: Axis.horizontal,
                       child: SingleChildScrollView(
+                        controller: _verticalScrollController,
                         scrollDirection: Axis.vertical,
                         child: grid,
                       ),
@@ -176,6 +189,7 @@ class _GameBoardState extends State<GameBoard> {
                   } else {
                     // No vertical scroll, only horizontal if needed
                     return SingleChildScrollView(
+                      controller: _horizontalScrollController,
                       scrollDirection: Axis.horizontal,
                       child: grid,
                     );
