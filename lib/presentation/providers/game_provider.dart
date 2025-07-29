@@ -286,8 +286,10 @@ class GameProvider extends ChangeNotifier {
     
     try {
       print('🔍 GameProvider: Calling Native5050Solver.find5050()');
+      print('🔍 GameProvider: Sending probability map: $probabilityMap');
       final newFiftyFiftyCells = await Native5050Solver.find5050(probabilityMap);
       print('🔍 GameProvider: Native5050Solver returned: $newFiftyFiftyCells');
+      print('🔍 GameProvider: Setting _fiftyFiftyCells to: $newFiftyFiftyCells');
       
       // Only notify listeners if the 50/50 cells actually changed
       bool hasChanged = _fiftyFiftyCells.length != newFiftyFiftyCells.length;
@@ -950,7 +952,12 @@ class GameProvider extends ChangeNotifier {
 
   // Check if a cell is in a 50/50 situation using python-based detection
   bool isCellIn5050Situation(int row, int col) {
-    return _fiftyFiftyCells.any((cell) => cell[0] == row && cell[1] == col);
+    final is5050 = _fiftyFiftyCells.any((cell) => cell[0] == row && cell[1] == col);
+    if (is5050 && _gameState != null) {
+      final cell = _gameState!.getCell(row, col);
+      print('🎯 50/50 DEBUG: Cell ($row, $col) is 50/50 cell with bomb: ${cell.hasBomb}');
+    }
+    return is5050;
   }
 
   // Reveal a cell as a 50/50 safe move if allowed
