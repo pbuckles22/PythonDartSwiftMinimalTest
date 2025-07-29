@@ -110,9 +110,16 @@ class _GameBoardState extends State<GameBoard> {
           _lastColumns = columns;
           _lastAvailableHeight = MediaQuery.of(context).size.height;
         }
+
+        // Check if we're in landscape mode
+        final isLandscape = MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
+        final isPhone = MediaQuery.of(context).size.width < 600;
+        final isPhoneLandscape = isLandscape && isPhone;
+
         return Column(
           children: [
-            _buildGameHeader(context, gameProvider),
+            // Only show header in portrait mode or on tablets
+            if (!isPhoneLandscape) _buildGameHeader(context, gameProvider),
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {

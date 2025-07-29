@@ -36,8 +36,24 @@ class _GamePageState extends State<GamePage> {
     // Probability callback will be set when probability mode is enabled
   }
 
+  // Helper method to determine if we're in landscape mode
+  bool _isLandscape(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    return size.width > size.height;
+  }
+
+  // Helper method to determine if we're on a phone (not tablet)
+  bool _isPhone(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    return size.width < 600; // Standard breakpoint for phones
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isLandscape = _isLandscape(context);
+    final isPhone = _isPhone(context);
+    final isPhoneLandscape = isLandscape && isPhone;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Minesweeper with ML'),
@@ -144,16 +160,12 @@ class _GamePageState extends State<GamePage> {
             }
           });
 
-          return Column(
-            children: [
-              // Game board
-              Expanded(
-                child: GameBoard(),
-              ),
-              // Game controls
-              _buildGameControls(context, gameProvider),
-            ],
-          );
+          // Use different layout for phone landscape mode
+          if (isPhoneLandscape) {
+            return _buildPhoneLandscapeLayout(context, gameProvider);
+          } else {
+            return _buildPortraitLayout(context, gameProvider);
+          }
         },
       ),
     );
@@ -451,6 +463,163 @@ class _GamePageState extends State<GamePage> {
             label: const Text('Settings'),
           ),
         ],
+      ),
+    );
+  }
+
+  // Layout for phone landscape mode - side-by-side layout
+  Widget _buildPhoneLandscapeLayout(BuildContext context, GameProvider gameProvider) {
+    return Row(
+      children: [
+        // Left side: Game board (takes most space)
+        Expanded(
+          flex: 3,
+          child: GameBoard(),
+        ),
+        // Right side: Game info and controls (compact)
+        Expanded(
+          flex: 1,
+          child: _buildLandscapeSidebar(context, gameProvider),
+        ),
+      ],
+    );
+  }
+
+  // Layout for portrait mode - traditional layout
+  Widget _buildPortraitLayout(BuildContext context, GameProvider gameProvider) {
+    return Column(
+      children: [
+        // Game board
+        Expanded(
+          child: GameBoard(),
+        ),
+        // Game controls
+        _buildGameControls(context, gameProvider),
+      ],
+    );
+  }
+
+  // Sidebar for landscape mode
+  Widget _buildLandscapeSidebar(BuildContext context, GameProvider gameProvider) {
+    final gameState = gameProvider.gameState!;
+    final stats = gameProvider.getGameStatistics();
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        border: Border(
+          left: BorderSide(
+            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Column(
+        children: [
+          // Game statistics
+          Container(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              children: [
+                // Mine counter
+                _buildLandscapeStatCard(
+                  context,
+                  'Mines',
+                  '${gameProvider.getRemainingMines()}',
+                  Icons.warning,
+                ),
+                const SizedBox(height: 8),
+                
+                // Timer
+                Consumer<GameProvider>(
+                  builder: (context, provider, child) {
+                    final elapsed = provider.timerService.elapsed;
+                    final timeString = '${elapsed.inMinutes.toString().padLeft(2, '0')}:${(elapsed.inSeconds % 60).toString().padLeft(2, '0')}';
+                    return _buildLandscapeStatCard(
+                      context,
+                      'Time',
+                      timeString,
+                      Icons.timer,
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                
+                // Progress
+                _buildLandscapeStatCard(
+                  context,
+                  'Progress',
+                  _progressString(gameState.progressPercentage),
+                  Icons.bar_chart,
+                ),
+              ],
+            ),
+          ),
+          
+          const Divider(),
+          
+          // Game controls
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        final settingsProvider = context.read<SettingsProvider>();
+                        gameProvider.initializeGame(settingsProvider.selectedDifficulty);
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('New Game'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _showSettings,
+                      icon: const Icon(Icons.settings),
+                      label: const Text('Settings'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _progressString(double progress) {
+    if (progress.isNaN || progress.isInfinite || progress < 0) return '0%';
+    final percent = (progress * 100).clamp(0, 100).toInt();
+    return '$percent%';
+  }
+
+  Widget _buildLandscapeStatCard(BuildContext context, String label, String value, IconData icon) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+        child: Column(
+          children: [
+            Icon(icon, size: 16),
+            const SizedBox(height: 2),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
       ),
     );
   }

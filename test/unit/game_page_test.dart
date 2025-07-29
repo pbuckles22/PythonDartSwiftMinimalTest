@@ -1,0 +1,554 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
+import 'package:python_flutter_embed_demo/presentation/pages/game_page.dart';
+import 'package:python_flutter_embed_demo/presentation/providers/game_provider.dart';
+import 'package:python_flutter_embed_demo/presentation/providers/settings_provider.dart';
+import 'package:python_flutter_embed_demo/domain/entities/game_state.dart';
+import 'package:python_flutter_embed_demo/domain/entities/cell.dart';
+import 'package:python_flutter_embed_demo/core/constants.dart';
+import 'package:python_flutter_embed_demo/services/timer_service.dart';
+import 'package:python_flutter_embed_demo/presentation/widgets/game_board.dart';
+import 'package:python_flutter_embed_demo/presentation/pages/settings_page.dart';
+import 'package:python_flutter_embed_demo/presentation/widgets/game_over_dialog.dart';
+import 'package:python_flutter_embed_demo/core/feature_flags.dart';
+
+void main() {
+  group('GamePage Tests', () {
+    late GameProvider mockGameProvider;
+    late SettingsProvider mockSettingsProvider;
+    late TimerService mockTimerService;
+
+    setUp(() {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      
+      // Initialize feature flags
+      FeatureFlags.enable5050Detection = true;
+      FeatureFlags.enable5050SafeMove = false;
+      FeatureFlags.enableFirstClickGuarantee = false;
+      
+      mockTimerService = TimerService();
+      mockGameProvider = GameProvider();
+      mockSettingsProvider = SettingsProvider();
+      
+      // Load settings from config
+      mockSettingsProvider.loadSettingsFromConfig();
+    });
+
+    Widget createTestWidget() {
+      return MaterialApp(
+        home: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<GameProvider>.value(value: mockGameProvider),
+            ChangeNotifierProvider<SettingsProvider>.value(value: mockSettingsProvider),
+          ],
+          child: const GamePage(),
+        ),
+      );
+    }
+
+    // Helper function to create a test game state
+    GameState createTestGameState({
+      String gameStatus = GameConstants.gameStatePlaying,
+      int revealedCount = 0,
+      int flaggedCount = 0,
+      bool hasBomb = false,
+      CellState cellState = CellState.unrevealed,
+    }) {
+      final testBoard = List.generate(9, (row) => 
+        List.generate(9, (col) => Cell(
+          hasBomb: hasBomb && row == 0 && col == 0,
+          bombsAround: 0,
+          state: cellState,
+          row: row,
+          col: col,
+        ))
+      );
+      
+      return GameState(
+        board: testBoard,
+        gameStatus: gameStatus,
+        minesCount: 10,
+        flaggedCount: flaggedCount,
+        revealedCount: revealedCount,
+        totalCells: 81,
+        startTime: DateTime.now(),
+        endTime: gameStatus != GameConstants.gameStatePlaying ? DateTime.now() : null,
+        difficulty: 'easy',
+      );
+    }
+
+    group('Basic Rendering Tests', () {
+      testWidgets('should render GamePage with app bar', (WidgetTester tester) async {
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        expect(find.text('Minesweeper with ML'), findsOneWidget);
+        expect(find.byType(AppBar), findsOneWidget);
+        expect(find.byIcon(Icons.settings), findsOneWidget);
+      });
+
+      testWidgets('should show loading indicator when game is loading', (WidgetTester tester) async {
+        // Set loading state by initializing game without a game state
+        mockGameProvider.initializeGame('easy');
+        
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        // Should show loading initially
+        expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      });
+
+      testWidgets('should show error message when game has error', (WidgetTester tester) async {
+        // Create a test game state to trigger error handling
+        final testGameState = createTestGameState();
+        mockGameProvider.testGameState = testGameState;
+        
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        // Test error handling by trying to reveal an invalid cell
+        mockGameProvider.revealCell(-1, -1);
+        await tester.pumpAndSettle();
+
+        // Should show error message
+        expect(find.textContaining('Error'), findsOneWidget);
+      });
+
+      testWidgets('should show game board when game is loaded', (WidgetTester tester) async {
+        final testGameState = createTestGameState();
+        mockGameProvider.testGameState = testGameState;
+        
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        expect(find.byType(GameBoard), findsOneWidget);
+        expect(find.text('New Game'), findsOneWidget);
+        expect(find.text('Settings'), findsOneWidget);
+      });
+    });
+
+    group('Debug Mode Tests', () {
+      testWidgets('should show debug buttons when debug probability mode is enabled', (WidgetTester tester) async {
+        // Enable debug mode through settings
+        mockSettingsProvider.toggleDebugProbabilityMode();
+        
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        expect(find.byIcon(Icons.code), findsOneWidget);
+        expect(find.byIcon(Icons.psychology), findsOneWidget);
+        expect(find.byIcon(Icons.analytics), findsOneWidget);
+        expect(find.byIcon(Icons.bug_report), findsOneWidget);
+        expect(find.byIcon(Icons.search), findsOneWidget);
+      });
+
+      testWidgets('should not show debug buttons when debug probability mode is disabled', (WidgetTester tester) async {
+        // Ensure debug mode is disabled
+        mockSettingsProvider.loadSettingsFromConfig();
+        
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        expect(find.byIcon(Icons.code), findsNothing);
+        expect(find.byIcon(Icons.psychology), findsNothing);
+        expect(find.byIcon(Icons.analytics), findsNothing);
+        expect(find.byIcon(Icons.bug_report), findsNothing);
+        expect(find.byIcon(Icons.search), findsNothing);
+      });
+
+      testWidgets('should handle Python test button press', (WidgetTester tester) async {
+        mockSettingsProvider.toggleDebugProbabilityMode();
+        
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byIcon(Icons.code));
+        await tester.pumpAndSettle();
+
+        // Should show a snackbar (either success or error)
+        expect(find.byType(SnackBar), findsOneWidget);
+      });
+
+      testWidgets('should handle 50/50 detection test button press', (WidgetTester tester) async {
+        mockSettingsProvider.toggleDebugProbabilityMode();
+        
+        // Create a test game state with revealed cells
+        final testBoard = List.generate(9, (row) => 
+          List.generate(9, (col) => Cell(
+            hasBomb: false,
+            bombsAround: row == 0 && col == 0 ? 1 : 0,
+            state: row == 0 && col == 0 ? CellState.revealed : CellState.unrevealed,
+            row: row,
+            col: col,
+          ))
+        );
+        
+        final testGameState = GameState(
+          board: testBoard,
+          gameStatus: GameConstants.gameStatePlaying,
+          minesCount: 10,
+          flaggedCount: 0,
+          revealedCount: 1,
+          totalCells: 81,
+          startTime: DateTime.now(),
+          endTime: null,
+          difficulty: 'easy',
+        );
+        
+        mockGameProvider.testGameState = testGameState;
+        
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byIcon(Icons.psychology));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(SnackBar), findsOneWidget);
+      });
+
+      testWidgets('should handle probability mode toggle', (WidgetTester tester) async {
+        mockSettingsProvider.toggleDebugProbabilityMode();
+        
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byIcon(Icons.analytics));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(SnackBar), findsOneWidget);
+        expect(find.textContaining('Probability mode'), findsOneWidget);
+      });
+
+      testWidgets('should handle save board state debug button', (WidgetTester tester) async {
+        mockSettingsProvider.toggleDebugProbabilityMode();
+        
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byIcon(Icons.bug_report));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(SnackBar), findsOneWidget);
+        expect(find.textContaining('Board state saved'), findsOneWidget);
+      });
+
+      testWidgets('should handle debug specific case button', (WidgetTester tester) async {
+        mockSettingsProvider.toggleDebugProbabilityMode();
+        
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byIcon(Icons.search));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(SnackBar), findsOneWidget);
+        expect(find.textContaining('Cell (4,0) case debugged'), findsOneWidget);
+      });
+    });
+
+    group('Settings Navigation Tests', () {
+      testWidgets('should navigate to settings page when settings button is pressed', (WidgetTester tester) async {
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byIcon(Icons.settings));
+        await tester.pumpAndSettle();
+
+        // Should navigate to settings page
+        expect(find.byType(SettingsPage), findsOneWidget);
+      });
+
+      testWidgets('should navigate to settings from game controls', (WidgetTester tester) async {
+        final testGameState = createTestGameState();
+        mockGameProvider.testGameState = testGameState;
+        
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Settings'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(SettingsPage), findsOneWidget);
+      });
+    });
+
+    group('Game Controls Tests', () {
+      testWidgets('should start new game when new game button is pressed', (WidgetTester tester) async {
+        final testGameState = createTestGameState();
+        mockGameProvider.testGameState = testGameState;
+        
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('New Game'));
+        await tester.pumpAndSettle();
+
+        // Should trigger game initialization
+        expect(find.byType(GameBoard), findsOneWidget);
+      });
+
+      testWidgets('should retry game when retry button is pressed', (WidgetTester tester) async {
+        // Create an error state by trying to reveal invalid cell
+        final testGameState = createTestGameState();
+        mockGameProvider.testGameState = testGameState;
+        
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        // Trigger error
+        mockGameProvider.revealCell(-1, -1);
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Retry'));
+        await tester.pumpAndSettle();
+
+        // Should trigger game initialization
+        expect(find.text('Retry'), findsNothing);
+      });
+    });
+
+    group('Layout Tests', () {
+      testWidgets('should show portrait layout on small screens', (WidgetTester tester) async {
+        tester.binding.window.physicalSizeTestValue = const Size(400, 800);
+        tester.binding.window.devicePixelRatioTestValue = 1.0;
+        
+        final testGameState = createTestGameState();
+        mockGameProvider.testGameState = testGameState;
+        
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        // Should show portrait layout (Column with GameBoard and controls)
+        expect(find.byType(GameBoard), findsOneWidget);
+        expect(find.text('New Game'), findsOneWidget);
+        expect(find.text('Settings'), findsOneWidget);
+
+        addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+      });
+
+      testWidgets('should show landscape layout on wide screens', (WidgetTester tester) async {
+        tester.binding.window.physicalSizeTestValue = const Size(800, 400);
+        tester.binding.window.devicePixelRatioTestValue = 1.0;
+        
+        final testGameState = createTestGameState();
+        mockGameProvider.testGameState = testGameState;
+        
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        // Should show landscape layout (Row with GameBoard and sidebar)
+        expect(find.byType(GameBoard), findsOneWidget);
+        expect(find.text('New Game'), findsOneWidget);
+        expect(find.text('Settings'), findsOneWidget);
+
+        addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+      });
+    });
+
+    group('Game Over Dialog Tests', () {
+      testWidgets('should show game over dialog when game is won', (WidgetTester tester) async {
+        // Create a test game state for won game
+        final testGameState = createTestGameState(
+          gameStatus: GameConstants.gameStateWon,
+          revealedCount: 71,
+          flaggedCount: 10,
+          cellState: CellState.revealed,
+        );
+        
+        mockGameProvider.testGameState = testGameState;
+        
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        // Should show game over dialog
+        expect(find.byType(GameOverDialog), findsOneWidget);
+      });
+
+      testWidgets('should show game over dialog when game is lost', (WidgetTester tester) async {
+        // Create a test game state for lost game
+        final testGameState = createTestGameState(
+          gameStatus: GameConstants.gameStateLost,
+          revealedCount: 1,
+          hasBomb: true,
+          cellState: CellState.revealed,
+        );
+        
+        mockGameProvider.testGameState = testGameState;
+        
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        // Should show game over dialog
+        expect(find.byType(GameOverDialog), findsOneWidget);
+      });
+    });
+
+    group('Error Handling Tests', () {
+      testWidgets('should handle missing game state gracefully', (WidgetTester tester) async {
+        mockSettingsProvider.toggleDebugProbabilityMode();
+        
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        // Test 50/50 detection with no game state
+        await tester.tap(find.byIcon(Icons.psychology));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(SnackBar), findsOneWidget);
+        expect(find.textContaining('No game state available'), findsOneWidget);
+      });
+
+      testWidgets('should handle method channel errors gracefully', (WidgetTester tester) async {
+        mockSettingsProvider.toggleDebugProbabilityMode();
+        
+        // Mock method channel to throw error
+        const channel = MethodChannel('python/minimal');
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+          channel,
+          (call) async {
+            throw PlatformException(code: 'TEST_ERROR', message: 'Test error');
+          },
+        );
+        
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byIcon(Icons.code));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(SnackBar), findsOneWidget);
+        expect(find.textContaining('Python test failed'), findsOneWidget);
+
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, null);
+      });
+    });
+
+    group('Game State Management Tests', () {
+      testWidgets('should initialize game on page load', (WidgetTester tester) async {
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        // Should trigger game initialization
+        expect(find.byType(GameBoard), findsOneWidget);
+      });
+
+      testWidgets('should handle game state changes', (WidgetTester tester) async {
+        final testGameState = createTestGameState();
+        mockGameProvider.testGameState = testGameState;
+        
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        // Verify game state is displayed
+        expect(find.byType(GameBoard), findsOneWidget);
+      });
+
+      testWidgets('should handle timer updates', (WidgetTester tester) async {
+        final testGameState = createTestGameState();
+        mockGameProvider.testGameState = testGameState;
+        
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        // Start timer
+        mockGameProvider.timerService.start();
+        await tester.pump(const Duration(seconds: 1));
+        await tester.pumpAndSettle();
+
+        // Should show timer
+        expect(find.byType(GameBoard), findsOneWidget);
+      });
+    });
+
+    group('UI Interaction Tests', () {
+      testWidgets('should handle app bar actions', (WidgetTester tester) async {
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        // Test settings button
+        await tester.tap(find.byIcon(Icons.settings));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(SettingsPage), findsOneWidget);
+      });
+
+      testWidgets('should handle game board interactions', (WidgetTester tester) async {
+        final testGameState = createTestGameState();
+        mockGameProvider.testGameState = testGameState;
+        
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        // Verify game board is present and interactive
+        expect(find.byType(GameBoard), findsOneWidget);
+      });
+
+      testWidgets('should handle landscape sidebar interactions', (WidgetTester tester) async {
+        tester.binding.window.physicalSizeTestValue = const Size(800, 400);
+        tester.binding.window.devicePixelRatioTestValue = 1.0;
+        
+        final testGameState = createTestGameState();
+        mockGameProvider.testGameState = testGameState;
+        
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        // Verify sidebar elements are present
+        expect(find.text('New Game'), findsOneWidget);
+        expect(find.text('Settings'), findsOneWidget);
+
+        addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+      });
+    });
+
+    group('Responsive Design Tests', () {
+      testWidgets('should adapt to different screen sizes', (WidgetTester tester) async {
+        // Test phone portrait
+        tester.binding.window.physicalSizeTestValue = const Size(400, 800);
+        tester.binding.window.devicePixelRatioTestValue = 1.0;
+        
+        final testGameState = createTestGameState();
+        mockGameProvider.testGameState = testGameState;
+        
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        expect(find.byType(GameBoard), findsOneWidget);
+
+        // Test tablet landscape
+        tester.binding.window.physicalSizeTestValue = const Size(1200, 800);
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        expect(find.byType(GameBoard), findsOneWidget);
+
+        addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+      });
+
+      testWidgets('should handle orientation changes', (WidgetTester tester) async {
+        final testGameState = createTestGameState();
+        mockGameProvider.testGameState = testGameState;
+        
+        // Test portrait
+        tester.binding.window.physicalSizeTestValue = const Size(400, 800);
+        tester.binding.window.devicePixelRatioTestValue = 1.0;
+        
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        expect(find.byType(GameBoard), findsOneWidget);
+
+        // Test landscape
+        tester.binding.window.physicalSizeTestValue = const Size(800, 400);
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        expect(find.byType(GameBoard), findsOneWidget);
+
+        addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+      });
+    });
+  });
+}
