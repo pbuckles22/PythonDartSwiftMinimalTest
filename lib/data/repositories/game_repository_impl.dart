@@ -336,26 +336,27 @@ class GameRepositoryImpl implements GameRepository {
 
   @override
   Future<GameState> perform5050SafeMove(int clickedRow, int clickedCol, int otherRow, int otherCol) async {
+    print('🚨 50/50 SAFE MOVE: Starting safe move from ($clickedRow,$clickedCol) to ($otherRow,$otherCol)');
+    
     if (_currentState == null || _currentState!.isGameOver) {
-      // print('DEBUG: perform5050SafeMove - Game is over, no action taken');
+      print('🚨 50/50 SAFE MOVE: Game is over, no action taken');
       return _currentState!; // No action if game is over
     }
     
     if (!_currentState!.isValidPosition(clickedRow, clickedCol) || 
         !_currentState!.isValidPosition(otherRow, otherCol)) {
-      // print('DEBUG: perform5050SafeMove - Invalid position: clicked($clickedRow,$clickedCol) other($otherRow,$otherCol)');
+      print('🚨 50/50 SAFE MOVE: Invalid position: clicked($clickedRow,$clickedCol) other($otherRow,$otherCol)');
       throw RangeError('Invalid position');
     }
     
     final clickedCell = _currentState!.getCell(clickedRow, clickedCol);
     final otherCell = _currentState!.getCell(otherRow, otherCol);
     
-    // print('DEBUG: perform5050SafeMove - Starting safe move from ($clickedRow,$clickedCol) to ($otherRow,$otherCol)');
-    // print('DEBUG: perform5050SafeMove - Clicked cell has bomb: ${clickedCell.hasBomb}, isRevealed: ${clickedCell.isRevealed}, isFlagged: ${clickedCell.isFlagged}');
-    // print('DEBUG: perform5050SafeMove - Other cell has bomb: ${otherCell.hasBomb}, isRevealed: ${otherCell.isRevealed}, isFlagged: ${otherCell.isFlagged}');
+    print('🚨 50/50 SAFE MOVE: Clicked cell ($clickedRow,$clickedCol) - hasBomb: ${clickedCell.hasBomb}, isRevealed: ${clickedCell.isRevealed}, isFlagged: ${clickedCell.isFlagged}');
+    print('🚨 50/50 SAFE MOVE: Other cell ($otherRow,$otherCol) - hasBomb: ${otherCell.hasBomb}, isRevealed: ${otherCell.isRevealed}, isFlagged: ${otherCell.isFlagged}');
     
     if (clickedCell.isRevealed || clickedCell.isFlagged) {
-      // print('DEBUG: perform5050SafeMove - Clicked cell already revealed or flagged, no action needed');
+      print('🚨 50/50 SAFE MOVE: Clicked cell already revealed or flagged, no action needed');
       return _currentState!; // No action needed
     }
     
@@ -366,18 +367,37 @@ class GameRepositoryImpl implements GameRepository {
     final clickedCellNew = newBoard[clickedRow][clickedCol];
     final otherCellNew = newBoard[otherRow][otherCol];
     
+    print('🚨 50/50 SAFE MOVE: Before move - Clicked cell has bomb: ${clickedCellNew.hasBomb}, Other cell has bomb: ${otherCellNew.hasBomb}');
+    
     if (clickedCellNew.hasBomb) {
-      // print('DEBUG: perform5050SafeMove - Moving mine from ($clickedRow,$clickedCol) to ($otherRow,$otherCol)');
+      print('🚨 50/50 SAFE MOVE: MOVING BOMB from ($clickedRow,$clickedCol) to ($otherRow,$otherCol)');
+      
+      // Capture board state before move for comparison
+      final beforeMoveState = _captureBoardNumbers(newBoard);
+      print('🚨 50/50 SAFE MOVE: Board numbers BEFORE move: $beforeMoveState');
+      
       // Simple 50/50 mine movement: just swap the mine between the two cells
       newBoard[clickedRow][clickedCol] = clickedCellNew.copyWith(hasBomb: false);
       newBoard[otherRow][otherCol] = otherCellNew.copyWith(hasBomb: true);
       
-      // print('DEBUG: perform5050SafeMove - Mine moved, updating bomb counts...');
+      print('🚨 50/50 SAFE MOVE: Mine moved, updating bomb counts...');
       // Update bomb counts for affected cells
       _updateBombCountsAfterMineMove(newBoard);
-      // print('DEBUG: perform5050SafeMove - Bomb counts updated');
+      
+      // Capture board state after move for comparison
+      final afterMoveState = _captureBoardNumbers(newBoard);
+      print('🚨 50/50 SAFE MOVE: Board numbers AFTER move: $afterMoveState');
+      
+      // Check if any numbers changed
+      final changedNumbers = _compareBoardStates(beforeMoveState, afterMoveState);
+      if (changedNumbers.isNotEmpty) {
+        print('🚨 50/50 SAFE MOVE: WARNING - Numbers changed after bomb move: $changedNumbers');
+        print('🚨 50/50 SAFE MOVE: This should NOT happen in a true 50/50 situation!');
+      } else {
+        print('🚨 50/50 SAFE MOVE: ✅ Board numbers unchanged - this is a true 50/50');
+      }
     } else {
-      // print('DEBUG: perform5050SafeMove - Clicked cell does not have a bomb, no mine movement needed');
+      print('🚨 50/50 SAFE MOVE: Clicked cell does not have a bomb, no mine movement needed');
     }
     
     // Now reveal the clicked cell (which is guaranteed to be safe)
@@ -467,6 +487,46 @@ class GameRepositoryImpl implements GameRepository {
     }
     
     return count;
+  }
+
+  /// Capture board numbers for debugging 50/50 safe moves
+  Map<String, int> _captureBoardNumbers(List<List<Cell>> board) {
+    final numbers = <String, int>{};
+    final rows = board.length;
+    final cols = board[0].length;
+    
+    for (int r = 0; r < rows; r++) {
+      for (int c = 0; c < cols; c++) {
+        final cell = board[r][c];
+        if (cell.isRevealed && !cell.hasBomb) {
+          numbers['($r,$c)'] = cell.bombsAround;
+        }
+      }
+    }
+    
+    return numbers;
+  }
+
+  /// Compare board states to find changed numbers
+  List<String> _compareBoardStates(Map<String, int> before, Map<String, int> after) {
+    final changes = <String>[];
+    
+    // Check for changed numbers
+    for (final entry in before.entries) {
+      final afterValue = after[entry.key];
+      if (afterValue != null && afterValue != entry.value) {
+        changes.add('${entry.key}: ${entry.value} → $afterValue');
+      }
+    }
+    
+    // Check for new numbers
+    for (final entry in after.entries) {
+      if (!before.containsKey(entry.key)) {
+        changes.add('${entry.key}: new ${entry.value}');
+      }
+    }
+    
+    return changes;
   }
 
   // TEST ONLY: Set a custom game state for deterministic tests

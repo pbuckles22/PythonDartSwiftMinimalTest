@@ -955,16 +955,18 @@ class GameProvider extends ChangeNotifier {
 
   // Reveal a cell as a 50/50 safe move if allowed
   Future<void> execute5050SafeMove(int row, int col) async {
-    print('🔍 50/50 Safe Move: Attempting safe move for cell ($row, $col)');
+    print('🎯 50/50 CLICK: User clicked 50/50 cell ($row, $col)');
+    print('🎯 50/50 CLICK: Feature enabled: ${FeatureFlags.enable5050SafeMove}');
+    print('🎯 50/50 CLICK: Cell in 50/50 situation: ${isCellIn5050Situation(row, col)}');
     
     if (!FeatureFlags.enable5050SafeMove) {
-      print('🔍 50/50 Safe Move: Feature disabled, falling back to regular reveal');
+      print('🎯 50/50 CLICK: Feature disabled, falling back to regular reveal');
       await revealCell(row, col);
       return;
     }
     
     if (!isCellIn5050Situation(row, col)) {
-      print('🔍 50/50 Safe Move: Cell is not in 50/50 situation, falling back to regular reveal');
+      print('🎯 50/50 CLICK: Cell is not in 50/50 situation, falling back to regular reveal');
       await revealCell(row, col);
       return;
     }
@@ -972,11 +974,13 @@ class GameProvider extends ChangeNotifier {
     // Find the other cell in the 50/50 pair
     final otherCell = _findOtherCellIn5050Pair(row, col);
     if (otherCell != null) {
-      print('🔍 50/50 Safe Move: Found other cell in pair (${otherCell[0]}, ${otherCell[1]})');
+      print('🎯 50/50 CLICK: Found other cell in pair (${otherCell[0]}, ${otherCell[1]})');
+      print('🎯 50/50 CLICK: Executing safe move from ($row, $col) to (${otherCell[0]}, ${otherCell[1]})');
       
       // Use the repository's safe move method
-      print('🔍 50/50 Safe Move: Calling repository perform5050SafeMove');
       _gameState = await _repository.perform5050SafeMove(row, col, otherCell[0], otherCell[1]);
+      
+      print('🎯 50/50 CLICK: Safe move completed - Game over: ${isGameOver}');
       
       // Start timer on first move if not already running
       if (!_timerService.isRunning) {
@@ -991,7 +995,7 @@ class GameProvider extends ChangeNotifier {
         _handleGameOver();
       }
     } else {
-      print('🔍 50/50 Safe Move: Could not find other cell in pair, falling back to regular reveal');
+      print('🎯 50/50 CLICK: Could not find other cell in pair, falling back to regular reveal');
       await revealCell(row, col);
     }
   }

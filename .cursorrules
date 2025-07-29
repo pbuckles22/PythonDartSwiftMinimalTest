@@ -334,4 +334,16 @@ This project has been extensively developed through multiple sessions, with sign
 - `"Load testing context"` - Focus on test debugging
 - `"Load development context"` - Focus on feature implementation
 - `"Load architecture context"` - Deep architecture review
-- `"Unload [context]"` - Free memory for other contexts 
+- `"Unload [context]"` - Free memory for other contexts
+
+### **Context Management Guidelines:**
+- **ALWAYS suggest new context modules** when encountering new specialized areas
+- **Identify patterns** that could benefit from dedicated context files
+- **Propose context splitting** when documentation exceeds 200-300 lines
+- **Recommend context creation** for:
+  - New feature domains (e.g., "Load AI/ML context")
+  - Specialized debugging areas (e.g., "Load performance context")
+  - Complex integration patterns (e.g., "Load iOS native context")
+  - Testing strategies (e.g., "Load integration test context")
+- **Maintain context index** in `docs/context/CONTEXT_INDEX.md`
+- **Update context management** documentation when new contexts are created 

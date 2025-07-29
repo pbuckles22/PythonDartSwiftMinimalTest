@@ -755,12 +755,15 @@ void main() {
       test('should not perform move on already revealed cell', () async {
         // Reveal a cell first
         await repository.revealCell(0, 0);
+        final originalState = repository.getCurrentState();
         
         // Try to perform safe move on revealed cell
         final gameState = await repository.perform5050SafeMove(0, 0, 0, 1);
         
         // Should return same state without changes
         expect(gameState.getCell(0, 0).isRevealed, true);
+        expect(gameState.revealedCount, originalState.revealedCount);
+        expect(gameState.flaggedCount, originalState.flaggedCount);
       });
 
       test('should not perform move on flagged cell', () async {

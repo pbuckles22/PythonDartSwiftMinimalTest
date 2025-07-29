@@ -105,6 +105,9 @@ class SettingsProvider extends ChangeNotifier {
     // Update feature flags
     FeatureFlags.enable5050SafeMove = _is5050SafeMoveEnabled;
     
+    print('🔧 SETTINGS: 50/50 Safe Move toggled to: $_is5050SafeMoveEnabled');
+    print('🔧 SETTINGS: FeatureFlags.enable5050SafeMove = ${FeatureFlags.enable5050SafeMove}');
+    
     _saveSettings();
     notifyListeners();
   }

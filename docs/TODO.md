@@ -44,6 +44,10 @@ These features are defined but not implemented:
    - ❌ No implementation
    - ❌ No UI controls
    - 📋 **TODO**: Implement hint logic and UI
+   - 💡 **INSIGHT**: Should integrate with 50/50 detection and safe moves
+   - 🎯 **VISION**: Make the game purely skill-based by eliminating guesswork
+   - 🔗 **REFERENCE**: [Gemini AI Minesweeper Strategy](https://gemini.google.com/share/8ce4ebccb5f5)
+   - 📝 **STRATEGY**: Combine First Click Guarantee + 50/50 Safe Moves + Hint System to remove all guessing elements
 
 3. **Auto Flag** (`enableAutoFlag`)
    - ❌ No implementation
@@ -94,6 +98,21 @@ These features are defined but not implemented:
     - ❌ No implementation
     - ❌ No UI controls
     - 📋 **TODO**: Implement difficulty prediction
+
+## 🎯 STRATEGIC VISION: Skill-Based Minesweeper
+
+### **Core Philosophy: Eliminate All Guessing**
+The goal is to transform Minesweeper from a game of chance to a game of pure skill by implementing:
+
+1. **First Click Guarantee** ✅ - Never die on first click
+2. **50/50 Safe Moves** 🔄 - Never die on 50/50 situations  
+3. **Hint System** 📋 - Provide strategic guidance for complex situations
+4. **Auto Flag** 📋 - Automatically flag obvious mines
+
+### **Reference Strategy**
+- 🔗 **AI Strategy Guide**: [Gemini AI Minesweeper Strategy](https://gemini.google.com/share/8ce4ebccb5f5)
+- 🎯 **Goal**: Make every move deterministic and skill-based
+- 💡 **Approach**: Combine multiple safety systems to eliminate guesswork
 
 ## IMMEDIATE PRIORITIES
 
