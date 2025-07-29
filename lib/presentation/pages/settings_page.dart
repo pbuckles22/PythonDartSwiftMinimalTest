@@ -734,7 +734,7 @@ class SettingsPage extends StatelessWidget {
           'Enable dark theme',
           settingsProvider.isDarkModeEnabled,
           settingsProvider.toggleDarkMode,
-          disabled: false,
+          disabled: true,
         ),
         _buildSimpleToggle(
           context,

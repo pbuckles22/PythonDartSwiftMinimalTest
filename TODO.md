@@ -1,137 +1,165 @@
-# TODO List - FlutterMinesweeper with Python
+# Flutter Minesweeper - Feature Implementation TODO
 
-## 🎯 **PRIORITIZED TODO LIST**
+## Current Status: Feature Flag Audit
 
-### **🔥 CRITICAL (Fix Immediately)**
+### ✅ IMPLEMENTED FEATURES
+These features are fully implemented and working:
 
-1. **✅ Difficulty Setting Bug - FIXED** 
-   - **Issue**: App starts with EASY difficulty despite HARD being default in config
-   - **Location**: Settings loading/initialization
-   - **Impact**: Users see wrong difficulty on first launch
-   - **Status**: ✅ **RESOLVED** - App now correctly starts with HARD difficulty
-   - **Effort**: Low (1-2 hours)
-   - **Solution**: Fixed initialization order in SettingsProvider and main.dart
+1. **First Click Guarantee** (`enableFirstClickGuarantee`)
+   - ✅ Toggle in Settings UI
+   - ✅ Connected to FeatureFlags
+   - ✅ Implemented in GameProvider
 
-### **🚀 HIGH PRIORITY (Next Sprint)**
+2. **50/50 Detection** (`enable5050Detection`)
+   - ✅ Toggle in Settings UI
+   - ✅ Connected to FeatureFlags
+   - ✅ Implemented in GameProvider with Python integration
+   - ✅ Visual feedback (orange borders)
 
-2. **✅ Horizontal Phone Game Support - COMPLETED**
-   - **Issue**: Game UI not optimized for horizontal/landscape orientation
-   - **Impact**: Poor user experience on phones in landscape mode
-   - **Effort**: Medium (1-2 days)
-   - **Tasks**:
-     - Implement responsive layout for landscape orientation
-     - Adjust board sizing and positioning for horizontal screens
-     - Optimize UI elements (buttons, settings, etc.) for landscape
-     - ✅ Test on various phone sizes in landscape mode
+3. **50/50 Safe Move** (`enable5050SafeMove`)
+   - ✅ Toggle in Settings UI
+   - ✅ Connected to FeatureFlags
+   - ✅ Basic implementation in GameProvider (needs improvement)
+   - ⚠️ **ISSUE**: Currently just does regular reveal, needs proper safe move logic
 
-3. **Code Coverage Improvement: 80% Target - IN PROGRESS**
-   - **Current**: 30.1% overall coverage (improved from 34.5%)
-   - **Target**: 80% per file
-   - **Completed**:
-     - ✅ `settings_provider.dart`: 191/191 lines (100%)
-     - ✅ `timer_service.dart`: 57/57 lines (100%)
-     - ✅ `native_5050_solver.dart`: 42.9% → 42.9% (test framework fixed, 11/11 tests passing)
-     - ✅ `game_state.dart`: 60/60 lines (100%) - **COMPLETED**
-     - ✅ `cell.dart`: 55/55 lines (100%) - **COMPLETED**
-     - ✅ `game_repository_impl.dart`: 152/386 lines (39.4%) → 316/386 lines (81.9%) - **COMPLETED**
-     - ✅ `game_provider.dart`: 194/543 lines (35.7%) → 381/543 lines (70.2%) - **COMPLETED**
-   - **Remaining Priority Files**:
-     - `game_page.dart`: 0/260 lines (0%) → 80% (needs +208 lines)
-     - `game_board.dart`: 0/143 lines (0%) → 80% (needs +114 lines)
-     - `cell_widget.dart`: 0/89 lines (0%) → 80% (needs +71 lines)
-   - **Impact**: Better code quality, fewer bugs, easier maintenance
-   - **Effort**: High (2-3 days)
+4. **Game Statistics** (`enableGameStatistics`)
+   - ✅ Toggle in Settings UI
+   - ✅ Connected to FeatureFlags
+   - ✅ Implemented in GameProvider and UI
 
-4. **Python 50/50 Detection Integration**
-   - **Status**: ✅ Core functionality working
-   - **Next**: Integrate with actual game state
-   - **Add**: Comprehensive error handling for Python failures
-   - **Optimize**: Python performance for real-time detection
-   - **Impact**: Core feature functionality
-   - **Effort**: Medium (1-2 days)
+5. **Haptic Feedback** (`enableHapticFeedback`)
+   - ✅ Toggle in Settings UI
+   - ✅ Connected to FeatureFlags
+   - ✅ Implemented in cell interactions
 
-### **📋 MEDIUM PRIORITY (This Month)**
+### ❌ NOT IMPLEMENTED FEATURES
+These features are defined but not implemented:
 
-5. **Game Features Implementation**
-   - **Kickstarter Mode Logic**: First click guarantee functionality
-   - **Undo Move**: Allow players to undo their last move
-   - **Hint System**: Provide hints for stuck players
-   - **Auto-Flag**: Automatically flag obvious mines
-   - **Board Reset**: Allow resetting current game
-   - **Impact**: Enhanced user experience
-   - **Effort**: High (3-5 days)
+1. **Undo Move** (`enableUndoMove`)
+   - ❌ No implementation in GameProvider
+   - ❌ No UI controls
+   - 📋 **TODO**: Implement move history and undo functionality
 
-6. **Testing Infrastructure**
-   - **Integration Tests**: Python integration end-to-end tests
-   - **Widget Tests**: UI component testing
-   - **Performance Tests**: Load testing for large boards
-   - **Error Handling Tests**: Edge case and failure scenarios
-   - **Impact**: Code reliability and maintainability
-   - **Effort**: Medium (2-3 days)
+2. **Hint System** (`enableHintSystem`)
+   - ❌ No implementation
+   - ❌ No UI controls
+   - 📋 **TODO**: Implement hint logic and UI
 
-### **🔧 LOW PRIORITY (Future Sprints)**
+3. **Auto Flag** (`enableAutoFlag`)
+   - ❌ No implementation
+   - ❌ No UI controls
+   - 📋 **TODO**: Implement automatic flagging of obvious mines
 
-7. **Technical Improvements**
-   - **Logging System**: Comprehensive debugging and monitoring
-   - **Performance Optimization**: App speed and memory usage
-   - **Error Handling**: Graceful failure handling throughout app
-   - **Code Refactoring**: Clean up technical debt
-   - **Impact**: Developer experience and app stability
-   - **Effort**: Medium (2-4 days)
+4. **Board Reset** (`enableBoardReset`)
+   - ❌ No implementation
+   - ❌ No UI controls
+   - 📋 **TODO**: Implement board reset functionality
 
-8. **Documentation & Polish**
-   - **API Documentation**: Document all public methods
-   - **User Guide**: In-app help and tutorials
-   - **Code Comments**: Improve code readability
-   - **README Updates**: Keep documentation current
-   - **Impact**: Maintainability and user experience
-   - **Effort**: Low (1-2 hours)
+5. **Custom Difficulty** (`enableCustomDifficulty`)
+   - ❌ No implementation
+   - ❌ No UI controls
+   - 📋 **TODO**: Implement custom difficulty settings
 
-## 📊 **PROGRESS TRACKING**
+6. **Best Times** (`enableBestTimes`)
+   - ❌ No implementation
+   - ❌ No UI controls
+   - 📋 **TODO**: Implement best times tracking and display
 
-### **✅ COMPLETED**
-- ✅ Python 50/50 detection core functionality
-- ✅ Basic test framework setup
-- ✅ Game UI implementation
-- ✅ Settings provider implementation
-- ✅ Timer service implementation
-- ✅ **Debug Probability Mode Feature** - Added feature flag with settings toggle
-- ✅ **Long-press behavior improvements** - Fixed revealed cell coordinate display
-- ✅ **Haptic feedback optimization** - Only triggers when appropriate
-- ✅ **Horizontal Phone Support - Core** - Cell size recalculation working with orientation detection
-- ✅ **Settings Provider Test Coverage** - Improved from 24.6% to 100% with comprehensive test suite
-- ✅ **Timer Service Test Coverage** - Improved from 38.6% to 100% with comprehensive test suite
-- ✅ **Native 50/50 Solver Test Framework** - Fixed Flutter binding initialization and method channel mocking (11/11 tests passing)
-- ✅ **GameState Test Coverage** - Improved from 58.3% to 100% with comprehensive test suite (29 tests)
-- ✅ **Cell Test Coverage** - Improved from 61.8% to 100% with comprehensive test suite (63 tests)
-- ✅ **GameRepositoryImpl Test Coverage** - Improved from 39.4% to 81.9% with comprehensive test suite (53 tests)
-- ✅ **GameProvider Test Coverage** - Improved from 35.7% to 70.2% with comprehensive test suite (85 tests)
+7. **Dark Mode** (`enableDarkMode`)
+   - ❌ No implementation
+   - ❌ No UI controls
+   - 📋 **TODO**: Implement theme switching
 
-### **🔄 IN PROGRESS**
-- 🔄 Test suite improvements (85/85 tests passing for game_provider.dart)
-- 🔄 Code coverage analysis (30.1% overall)
+8. **Animations** (`enableAnimations`)
+   - ❌ No implementation
+   - ❌ No UI controls
+   - 📋 **TODO**: Implement smooth animations
 
-### **📈 SUCCESS METRICS**
-- **Test Coverage**: 30.1% → 80% target (improved from 34.5%)
-- **Test Pass Rate**: 100% (85/85 passing for game_provider.dart)
-- **Critical Bugs**: 0 remaining (all fixed)
-- **Feature Completeness**: ~75% (core game + Python integration + comprehensive testing)
+9. **Sound Effects** (`enableSoundEffects`)
+   - ❌ No implementation
+   - ❌ No UI controls
+   - 📋 **TODO**: Implement sound effects
 
-## 🎯 **IMMEDIATE NEXT STEPS**
+10. **ML Assistance** (`enableMLAssistance`)
+    - ❌ No implementation
+    - ❌ No UI controls
+    - 📋 **TODO**: Implement ML-powered assistance
 
-1. **✅ Fix difficulty setting bug** (1-2 hours) - **COMPLETED**
-2. **✅ Improve settings_provider.dart coverage** (24.6% → 100%) - **COMPLETED**
-3. **✅ Improve timer_service.dart coverage** (38.6% → 100%) - **COMPLETED**
-4. **✅ Fix native_5050_solver.dart test framework** (11/11 tests passing) - **COMPLETED**
-5. **✅ Improve game_state.dart coverage** (58.3% → 100%) - **COMPLETED**
-6. **✅ Improve cell.dart coverage** (61.8% → 100%) - **COMPLETED**
-7. **✅ Improve game_repository_impl.dart coverage** (39.4% → 81.9%) - **COMPLETED**
-8. **✅ Improve game_provider.dart coverage** (35.7% → 70.2%) - **COMPLETED**
-9. **Continue code coverage improvement** with `game_page.dart` (next highest impact)
-10. **Complete Python 50/50 integration** with game state
-11. **Implement kickstarter mode** (high user value)
+11. **Auto Play** (`enableAutoPlay`)
+    - ❌ No implementation
+    - ❌ No UI controls
+    - 📋 **TODO**: Implement auto-play functionality
 
----
+12. **Difficulty Prediction** (`enableDifficultyPrediction`)
+    - ❌ No implementation
+    - ❌ No UI controls
+    - 📋 **TODO**: Implement difficulty prediction
 
-*Last Updated: January 2025*
-*Total Items: 7 prioritized categories* 
+## IMMEDIATE PRIORITIES
+
+### 🔥 CRITICAL: Fix 50/50 Safe Move
+**Issue**: The 50/50 safe move feature is enabled but doesn't actually prevent death.
+
+**Current Behavior**: 
+- User clicks orange 50/50 cell
+- App calls `execute5050SafeMove()`
+- Method just does regular `revealCell()` 
+- User can still die if they hit a mine
+
+**Required Fix**:
+- Implement proper safe move logic that either:
+  1. Reveals the safe cell instead of the clicked cell, OR
+  2. Moves the mine to the other orange cell
+- Add proper board state analysis
+- Prevent crashes during analysis
+
+### 🔧 MEDIUM: Hide Unimplemented Features
+**Issue**: Settings UI shows toggles for features that don't work.
+
+**Solution**: 
+- Hide toggles for unimplemented features
+- Add "Coming Soon" indicators
+- Only show implemented features
+
+### 📋 LOW: Implement Missing Features
+**Priority Order**:
+1. **Undo Move** - High user value, moderate complexity
+2. **Hint System** - High user value, moderate complexity  
+3. **Auto Flag** - High user value, high complexity
+4. **Board Reset** - Medium user value, low complexity
+5. **Dark Mode** - Medium user value, moderate complexity
+6. **Best Times** - Medium user value, low complexity
+7. **Custom Difficulty** - Low user value, moderate complexity
+8. **Animations** - Low user value, high complexity
+9. **Sound Effects** - Low user value, moderate complexity
+10. **ML Assistance** - Low user value, very high complexity
+11. **Auto Play** - Low user value, very high complexity
+12. **Difficulty Prediction** - Low user value, very high complexity
+
+## NEXT STEPS
+
+1. **Fix 50/50 Safe Move** (Critical) - ✅ **COMPLETED** - Now uses repository method
+2. **Hide unimplemented feature toggles** (Medium)
+3. **Implement Undo Move** (High priority)
+4. **Implement Hint System** (High priority)
+5. **Add "Coming Soon" indicators** (Low priority)
+
+## 🚨 CRITICAL: ARCHITECTURE DOCUMENTATION
+
+**ALWAYS CHECK `ARCHITECTURE_CONTEXT.md` BEFORE IMPLEMENTING NEW FEATURES**
+
+This comprehensive architecture document prevents:
+- Code duplication (like the 50/50 safe move issue we just fixed)
+- Architecture violations
+- Feature flag conflicts
+- Repository pattern violations
+- Immutable state violations
+
+**Key Lesson Learned**: The `perform5050SafeMove` method already existed in the `GameRepository` interface and was fully implemented in `GameRepositoryImpl`. We should have checked the repository interface first instead of implementing our own bomb-moving logic in the provider.
+
+## NOTES
+
+- All feature flags are properly connected to SettingsProvider
+- All toggles update FeatureFlags correctly
+- The issue is that most features are only defined, not implemented
+- 50/50 Safe Move is the only "broken" implemented feature 

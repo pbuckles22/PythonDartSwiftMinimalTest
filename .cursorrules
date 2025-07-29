@@ -1,5 +1,36 @@
 # Flutter Minesweeper with Python Integration - COMPREHENSIVE CONTEXT
 
+## 🚨 CRITICAL: ALWAYS CHECK ARCHITECTURE BEFORE IMPLEMENTING
+
+**BEFORE implementing any new features, ALWAYS check the existing architecture:**
+
+### Repository Layer (ALWAYS CHECK FIRST)
+- **GameRepository Interface** (`lib/domain/repositories/game_repository.dart`) - Check if method already exists
+- **GameRepositoryImpl** (`lib/data/repositories/game_repository_impl.dart`) - Check if implementation exists
+- **Key Methods**: `perform5050SafeMove()`, `revealCell()`, `toggleFlag()`, `chordCell()`
+
+### Feature Flags System (ALWAYS CHECK)
+- **FeatureFlags** (`lib/core/feature_flags.dart`) - Static class, single source of truth
+- **SettingsProvider** (`lib/presentation/providers/settings_provider.dart`) - Updates FeatureFlags
+- **NEVER** create duplicate feature flag systems
+
+### Python Integration (SINGLE POINT)
+- **Native5050Solver** (`lib/services/native_5050_solver.dart`) - Only Python integration point
+- **Method Channel**: `python/minimal`
+- **NEVER** create additional Python integration points
+
+### Immutable State (CRITICAL)
+- **GameState** and **Cell** objects are immutable
+- **ALWAYS** use `copyWith()` or repository methods
+- **NEVER** make final properties mutable
+
+### Common Anti-Patterns to Avoid
+- ❌ Don't implement game logic directly in providers
+- ❌ Don't create duplicate repository methods
+- ❌ Don't bypass repository pattern
+- ❌ Don't create local feature flags
+- ❌ Don't modify immutable objects directly
+
 ## Project Overview
 This project integrates Python functionality (specifically a 50/50 detection algorithm) into a Flutter Minesweeper iOS application. The strategy evolved from selectively copying files to starting with a clean, working Python-enabled Flutter project (`PythonDartSwiftMinimalTest`) and then integrating the Minesweeper UI and logic on top.
 

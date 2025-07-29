@@ -167,9 +167,12 @@ class _GameBoardState extends State<GameBoard> {
                             onTap: () {
                               final is5050Cell = gameProvider.isCellIn5050Situation(row, col);
                               final is5050SafeMoveEnabled = FeatureFlags.enable5050SafeMove;
+                              print('🔍 GameBoard: Cell ($row, $col) - is5050Cell: $is5050Cell, is5050SafeMoveEnabled: $is5050SafeMoveEnabled');
                               if (is5050Cell && is5050SafeMoveEnabled) {
+                                print('🔍 GameBoard: Executing 50/50 safe move for cell ($row, $col)');
                                 gameProvider.execute5050SafeMove(row, col);
                               } else {
+                                print('🔍 GameBoard: Regular reveal for cell ($row, $col)');
                                 gameProvider.revealCell(row, col);
                               }
                             },

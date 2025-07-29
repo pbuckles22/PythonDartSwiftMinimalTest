@@ -382,4 +382,23 @@ The embedded Python executable approach is the **only viable solution** for iOS:
 - **Proven approach** (used by many production apps)
 - **Scalable** (can handle complex Python logic)
 
-This solution provides a solid foundation for the larger project goal of sending 2D/3D board states to Python and receiving JSON results, with comprehensive testing and error handling in place. 
+This solution provides a solid foundation for the larger project goal of sending 2D/3D board states to Python and receiving JSON results, with comprehensive testing and error handling in place.
+
+## 🚨 CRITICAL: ARCHITECTURE DOCUMENTATION
+
+**ALWAYS CHECK `ARCHITECTURE_CONTEXT.md` BEFORE IMPLEMENTING NEW FEATURES**
+
+This file contains the complete architecture documentation to prevent:
+- Code duplication
+- Architecture violations  
+- Feature flag conflicts
+- Repository pattern violations
+- Immutable state violations
+
+The architecture document includes:
+- Complete repository interface and implementation details
+- Feature flags system documentation
+- Python integration patterns
+- Testing framework guidelines
+- Common patterns and anti-patterns
+- Implementation checklists 

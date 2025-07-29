@@ -53,7 +53,7 @@
     "features": {
       "kickstarter_mode": true,
       "5050_detection": true,
-      "5050_safe_move": true,
+      "5050_safe_move": false,
       "game_statistics": true,
       "board_reset": false,
       "custom_difficulty": false,

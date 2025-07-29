@@ -955,9 +955,85 @@ class GameProvider extends ChangeNotifier {
 
   // Reveal a cell as a 50/50 safe move if allowed
   Future<void> execute5050SafeMove(int row, int col) async {
-    if (!FeatureFlags.enable5050SafeMove) return;
-    if (!isCellIn5050Situation(row, col)) return;
-    await revealCell(row, col);
+    print('🔍 50/50 Safe Move: Attempting safe move for cell ($row, $col)');
+    
+    if (!FeatureFlags.enable5050SafeMove) {
+      print('🔍 50/50 Safe Move: Feature disabled, falling back to regular reveal');
+      await revealCell(row, col);
+      return;
+    }
+    
+    if (!isCellIn5050Situation(row, col)) {
+      print('🔍 50/50 Safe Move: Cell is not in 50/50 situation, falling back to regular reveal');
+      await revealCell(row, col);
+      return;
+    }
+    
+    // Find the other cell in the 50/50 pair
+    final otherCell = _findOtherCellIn5050Pair(row, col);
+    if (otherCell != null) {
+      print('🔍 50/50 Safe Move: Found other cell in pair (${otherCell[0]}, ${otherCell[1]})');
+      
+      // Use the repository's safe move method
+      print('🔍 50/50 Safe Move: Calling repository perform5050SafeMove');
+      _gameState = await _repository.perform5050SafeMove(row, col, otherCell[0], otherCell[1]);
+      
+      // Start timer on first move if not already running
+      if (!_timerService.isRunning) {
+        _timerService.start();
+      }
+      
+      await updateFiftyFiftyDetection();
+      notifyListeners();
+      
+      if (isGameOver) {
+        _timerService.stop();
+        _handleGameOver();
+      }
+    } else {
+      print('🔍 50/50 Safe Move: Could not find other cell in pair, falling back to regular reveal');
+      await revealCell(row, col);
+    }
+  }
+
+  /// Find the other cell in a 50/50 pair
+  List<int>? _findOtherCellIn5050Pair(int row, int col) {
+    if (_gameState == null) return null;
+    
+    print('🔍 50/50 Safe Move: Looking for other cell in 50/50 pair for ($row, $col)');
+    
+    // Get revealed neighbors of the clicked cell
+    final revealedNeighbors = _getRevealedNeighbors(row, col);
+    
+    for (final neighbor in revealedNeighbors) {
+      final neighborRow = neighbor[0];
+      final neighborCol = neighbor[1];
+      final neighborCell = _gameState!.getCell(neighborRow, neighborCol);
+      
+      if (neighborCell.isRevealed && neighborCell.bombsAround > 0) {
+        // Get unrevealed neighbors of this revealed cell
+        final unrevealedNeighbors = _getUnrevealedNeighbors(neighborRow, neighborCol);
+        final flaggedNeighbors = _getFlaggedNeighbors(neighborRow, neighborCol);
+        
+        // Check if this revealed cell needs exactly 1 more mine and has exactly 2 unrevealed neighbors
+        final remainingMines = neighborCell.bombsAround - flaggedNeighbors.length;
+        
+        if (unrevealedNeighbors.length == 2 && remainingMines == 1) {
+          print('🔍 50/50 Safe Move: Found 50/50 situation with neighbor ($neighborRow, $neighborCol)');
+          
+          // Find the other unrevealed cell (not the clicked one)
+          for (final unrevealed in unrevealedNeighbors) {
+            if (unrevealed[0] != row || unrevealed[1] != col) {
+              print('🔍 50/50 Safe Move: Other cell in pair is (${unrevealed[0]}, ${unrevealed[1]})');
+              return unrevealed;
+            }
+          }
+        }
+      }
+    }
+    
+    print('🔍 50/50 Safe Move: No other cell found in pair');
+    return null;
   }
 
   /// Reset the game to initial state

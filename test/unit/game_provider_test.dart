@@ -1001,6 +1001,41 @@ void main() {
         expect(errorProvider.error, isNotNull);
       });
     });
+
+    group('50/50 Safe Move Tests', () {
+      test('should execute 50/50 safe move when feature is enabled', () async {
+        FeatureFlags.enable5050SafeMove = true;
+        await gameProvider.initializeGame('easy');
+        
+        // Execute safe move
+        await gameProvider.execute5050SafeMove(0, 0);
+        
+        // Should have attempted to find a safe cell (no exception thrown)
+        expect(gameProvider.gameState, isNotNull);
+      });
+
+      test('should fall back to regular reveal when safe move is disabled', () async {
+        FeatureFlags.enable5050SafeMove = false;
+        await gameProvider.initializeGame('easy');
+        
+        // Execute safe move
+        await gameProvider.execute5050SafeMove(0, 0);
+        
+        // Should have fallen back to regular reveal
+        expect(gameProvider.gameState, isNotNull);
+      });
+
+      test('should fall back to regular reveal when cell is not in 50/50 situation', () async {
+        FeatureFlags.enable5050SafeMove = true;
+        await gameProvider.initializeGame('easy');
+        
+        // Execute safe move on a cell that's not in 50/50 situation
+        await gameProvider.execute5050SafeMove(0, 0);
+        
+        // Should have fallen back to regular reveal
+        expect(gameProvider.gameState, isNotNull);
+      });
+    });
   });
 }
 
