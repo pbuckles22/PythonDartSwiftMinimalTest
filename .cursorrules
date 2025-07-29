@@ -321,4 +321,17 @@ The embedded Python executable approach is the **only viable solution** for iOS:
 This solution provides a solid foundation for the larger project goal of sending 2D/3D board states to Python and receiving JSON results, with comprehensive testing and error handling in place.
 
 ## Conversation Context
-This project has been extensively developed through multiple sessions, with significant progress made on Python integration, UI development, and testing framework. The conversation history is documented in `CONVERSATION_SUMMARY.txt` and comprehensive context in `CONTEXT.md`. Key achievements include working 50/50 detection, comprehensive test framework, and iOS device compatibility. 
+This project has been extensively developed through multiple sessions, with significant progress made on Python integration, UI development, and testing framework. The conversation history is documented in `docs/reference/CONVERSATION_SUMMARY.txt` and comprehensive context in `docs/context/CONTEXT.md`. Key achievements include working 50/50 detection, comprehensive test framework, and iOS device compatibility.
+
+## 📁 ORGANIZED DOCUMENTATION STRUCTURE
+
+### **Context Management:**
+- **Core Architecture**: `.cursorrules` (always loaded)
+- **Current Session**: `docs/TODO.md`, `docs/PROJECT_STATUS.md`
+- **Detailed Reference**: `docs/architecture/`, `docs/context/`, `docs/reference/`
+
+### **Context Switching Commands:**
+- `"Load testing context"` - Focus on test debugging
+- `"Load development context"` - Focus on feature implementation
+- `"Load architecture context"` - Deep architecture review
+- `"Unload [context]"` - Free memory for other contexts 
