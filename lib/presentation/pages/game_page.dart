@@ -9,6 +9,7 @@ import 'settings_page.dart';
 import '../../core/constants.dart';
 import '../../core/feature_flags.dart';
 import '../../services/timer_service.dart';
+import '../../services/native_5050_solver.dart';
 
 class GamePage extends StatefulWidget {
   const GamePage({Key? key}) : super(key: key);
@@ -192,30 +193,37 @@ class _GamePageState extends State<GamePage> {
   void _test5050Detection() async {
     print("🔔 Dart: _test5050Detection() called from GamePage");
     
-    final gameProvider = context.read<GameProvider>();
-    
-    // Use the real game state instead of test data
-    if (gameProvider.gameState == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No game state available")),
-      );
-      return;
-    }
-    
     try {
-      // Call the real 50/50 detection with actual game state
-      await gameProvider.updateFiftyFiftyDetection();
+      // Use HARDCODED TEST DATA to test Python integration directly
+      final testProbabilityMap = {
+        '(1, 2)': 0.5,
+        '(3, 4)': 0.5,
+        '(5, 6)': 0.3,
+        '(7, 8)': 0.7,
+        '(9, 10)': 0.5,  // Add more 50/50 cells for testing
+        '(11, 12)': 0.5,
+      };
       
-      final fiftyFiftyCells = gameProvider.fiftyFiftyCells;
-      print("🔔 Dart: Real 50/50 detection found ${fiftyFiftyCells.length} cells: $fiftyFiftyCells");
+      print("🔔 Dart: Testing Python 50/50 detection with hardcoded data: $testProbabilityMap");
+      
+      // Call Python directly with test data
+      final result = await Native5050Solver.find5050(testProbabilityMap);
+      
+      print("🔔 Dart: Python 50/50 detection result: $result");
       
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("50/50 Detection: Found ${fiftyFiftyCells.length} cells")),
+        SnackBar(
+          content: Text("Python 50/50 Test: Found ${result.length} cells: $result"),
+          backgroundColor: Colors.blue,
+        ),
       );
     } catch (e) {
-      print("🔔 Dart: 50/50 detection error: $e");
+      print("🔔 Dart: Python 50/50 detection error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("50/50 Error: $e")),
+        SnackBar(
+          content: Text("Python 50/50 Error: $e"),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }

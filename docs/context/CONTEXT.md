@@ -1,15 +1,50 @@
-# Flutter Minesweeper with Python Integration - Comprehensive Context
+# Flutter Minesweeper with Python Integration - General Context
+
+## 🚨 CRITICAL: ALWAYS CHECK ARCHITECTURE BEFORE IMPLEMENTING
+
+**BEFORE implementing any new features, ALWAYS check the existing architecture:**
+
+### Repository Layer (ALWAYS CHECK FIRST)
+- **GameRepository Interface** (`lib/domain/repositories/game_repository.dart`) - Check if method already exists
+- **GameRepositoryImpl** (`lib/data/repositories/game_repository_impl.dart`) - Check if implementation exists
+- **Key Methods**: `perform5050SafeMove()`, `revealCell()`, `toggleFlag()`, `chordCell()`
+
+### Feature Flags System (ALWAYS CHECK)
+- **FeatureFlags** (`lib/core/feature_flags.dart`) - Static class, single source of truth
+- **SettingsProvider** (`lib/presentation/providers/settings_provider.dart`) - Updates FeatureFlags
+- **NEVER** create duplicate feature flag systems
+
+### Python Integration (SINGLE POINT)
+- **Native5050Solver** (`lib/services/native_5050_solver.dart`) - Only Python integration point
+- **Method Channel**: `python/minimal`
+- **NEVER** create additional Python integration points
+
+### Immutable State (CRITICAL)
+- **GameState** and **Cell** objects are immutable
+- **ALWAYS** use `copyWith()` or repository methods
+- **NEVER** make final properties mutable
+
+### Common Anti-Patterns to Avoid
+- ❌ Don't implement game logic directly in providers
+- ❌ Don't create duplicate repository methods
+- ❌ Don't bypass repository pattern
+- ❌ Don't create local feature flags
+- ❌ Don't modify immutable objects directly
 
 ## Project Overview
-
 This project integrates Python functionality (specifically a 50/50 detection algorithm) into a Flutter Minesweeper iOS application. The strategy evolved from selectively copying files to starting with a clean, working Python-enabled Flutter project (`PythonDartSwiftMinimalTest`) and then integrating the Minesweeper UI and logic on top.
 
 ## Development Strategy
-
 The project is being developed in "chunks":
 - **Chunk 1**: Establish a working Python integration foundation (1+1 test)
 - **Chunk 2**: Integrate the Minesweeper UI
 - **Chunk 3**: Integrate the Python 50/50 detection
+
+## Current Status: ✅ MAJOR PROGRESS - PYTHON SCRIPT WORKING
+
+### Approach: Embedded Python Virtual Environment
+- **Status**: Python script working with dependencies, Swift compilation needs fixing
+- **Last Updated**: Current session
 
 ## Key Technical Architecture
 
@@ -17,57 +52,67 @@ The project is being developed in "chunks":
 1. **Flutter UI** → Button press triggers `_callPython()` or 50/50 detection
 2. **Method Channel** → Flutter calls `addOneAndOne` or `find5050Situations` on channel `python/minimal`
 3. **Swift Handler** → `AppDelegate` receives call and calls `PythonMinimalRunner` methods
-4. **Python Subprocess** → Swift creates Process, runs Python scripts
+4. **Python Subprocess** → Swift creates Process, runs Python scripts with virtual environment
 5. **Result Parsing** → Swift reads stdout, parses results
 6. **Return to Flutter** → Result sent back via method channel
 
-### Why Embedded Python Executable
+### Python Virtual Environment Setup (COMPLETED)
+```bash
+# Location: ios/Runner/Resources/
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# requirements.txt contents:
+numpy>=1.21.0
+scipy>=1.7.0
+```
+
+### Why Embedded Python Virtual Environment
 
 #### Previous Attempts (All Failed)
 - ❌ **PythonKit** - App crashes during initialization, complex setup
 - ❌ **System Python Subprocess** - Process class not available on iOS
 - ❌ **macOS-only subprocess** - Works on simulator but not iOS devices
 
-#### Embedded Python Advantages
+#### Embedded Virtual Environment Advantages
 - ✅ **iOS compatible** - Works on actual iOS devices
 - ✅ **App Store compliant** - Self-contained, no external dependencies
-- ✅ **Proven approach** - Many production apps use this method
-- ✅ **Full Python functionality** - Can use any Python libraries
+- ✅ **Dependency management** - Virtual environment with requirements.txt
+- ✅ **Full Python functionality** - Can use any Python libraries (numpy, scipy)
 
 ## Current Implementation Status
 
 ### What Works
 - ✅ Method channel communication between Flutter and Swift
 - ✅ Swift subprocess calls (macOS simulator and iOS devices)
-- ✅ Python script execution via subprocess
+- ✅ Python script execution via subprocess with virtual environment
 - ✅ 1+1 Python test functionality
 - ✅ Minesweeper UI integration
-- ✅ 50/50 detection Python integration
+- ✅ 50/50 detection Python integration (script working)
 - ✅ Feature flags system
 - ✅ Settings persistence
 - ✅ Comprehensive test framework
-- ✅ **Debug Probability Mode** - Interactive probability analysis with visual highlighting
-- ✅ **Conditional Debug UI** - Debug buttons only show when feature flag is enabled
-- ✅ **Long-press Behavior** - Coordinates shown in snackbar, probability analysis on cells
-- ✅ **Visual Improvements** - Clean UI without coordinate text artifacts
-- ✅ **Haptic Feedback Optimization** - Only triggers when appropriate
+- ✅ Python virtual environment with numpy/scipy dependencies
 
 ### What Doesn't Work (Issues)
+- ❌ Swift compilation errors in `PythonMinimalRunner.swift`
 - ❌ Some test failures due to Flutter binding initialization
 - ❌ Settings provider tests need adjustment for actual behavior
 - ❌ Game provider tests need proper game state initialization
-- ❌ **Horizontal phone game support** - UI not optimized for landscape orientation
 
 ## Key Implementation Files
 
 ### Swift Files
-- `ios/Runner/PythonMinimalRunner.swift` - Subprocess implementation
+- `ios/Runner/PythonMinimalRunner.swift` - Subprocess implementation (NEEDS FIXING)
 - `ios/Runner/AppDelegate.swift` - Method channel setup
 
 ### Python Files
 - `ios/Runner/Resources/minimal.py` - Python script that prints result
-- `ios/Runner/Resources/find_5050.py` - 50/50 detection logic
+- `ios/Runner/Resources/find_5050.py` - 50/50 detection logic (WORKING)
 - `ios/Runner/Resources/core/` - Sophisticated CSP/Probabilistic solver files
+- `ios/Runner/Resources/venv/` - Virtual environment with dependencies
+- `ios/Runner/Resources/requirements.txt` - Python dependencies
 
 ### Flutter Files
 - `lib/main.dart` - UI and method channel calls
@@ -95,6 +140,10 @@ The project is being developed in "chunks":
 #### Problem: "False 50/50s" being detected
 **Root Cause**: Simplistic probability calculation
 **Solution**: Integrated sophisticated CSP/Probabilistic solver with proper validation
+
+#### Problem: Missing Python dependencies (numpy, scipy)
+**Root Cause**: Python script requires scientific computing libraries
+**Solution**: Created virtual environment with requirements.txt
 
 ### 2. UI and Settings Issues
 
@@ -126,6 +175,16 @@ The project is being developed in "chunks":
 **Root Cause**: Incorrect package names in test imports
 **Solution**: Corrected to `package:python_flutter_embed_demo`
 
+### 5. Swift Compilation Issues
+
+#### Problem: `Process` class not found
+**Root Cause**: Missing Foundation import
+**Solution**: Need to add `import Foundation` to `PythonMinimalRunner.swift`
+
+#### Problem: `@objc` return type incompatibility
+**Root Cause**: `Int?` not compatible with Objective-C
+**Solution**: Need to change return type to `NSNumber?`
+
 ## 50/50 Detection Implementation
 
 ### Dart-Side Logic (`GameProvider`)
@@ -138,6 +197,7 @@ The project is being developed in "chunks":
 - Attempts sophisticated CSP/Probabilistic solver integration first
 - Falls back to simple detection if imports or dependencies fail
 - Includes dependency checks and robust error handling
+- **WORKING**: Script correctly identifies 50/50 cells with 0.5 probability
 
 ### Visual Feedback
 - 50/50 cells highlighted with orange border and help icon
@@ -161,6 +221,7 @@ The project is being developed in "chunks":
 - `test/unit/game_provider_test.dart` - Game logic unit tests
 - `test/unit/settings_provider_test.dart` - Settings unit tests
 - `test/integration/python_integration_test.dart` - Python integration tests
+- `test/unit/method_channel_test.dart` - Method channel communication tests
 - `test_driver/app.dart` & `test_driver/app_test.dart` - Flutter drive tests
 - `test_runner.sh` - Comprehensive test automation script
 
@@ -188,6 +249,11 @@ flutter test test/unit/game_provider_test.dart
 
 # Run test runner script
 ./test_runner.sh
+
+# Test Python script directly
+cd ios/Runner/Resources
+source venv/bin/activate
+echo '{"(1, 2)": 0.5, "(3, 4)": 0.5}' | python3 find_5050.py
 ```
 
 ### Build Commands
@@ -204,23 +270,25 @@ flutter run
 ### Completed Features
 - ✅ Python 1+1 integration working
 - ✅ Minesweeper UI fully functional
-- ✅ 50/50 detection Python integration
+- ✅ 50/50 detection Python integration (script working)
 - ✅ Feature flags system
 - ✅ Settings persistence
 - ✅ Comprehensive test framework
 - ✅ Scroll position bug fixes
 - ✅ Board movement optimizations
+- ✅ Python virtual environment with dependencies
 
 ### Current Issues
+- 🔄 Swift compilation errors preventing device testing
 - 🔄 Some test failures due to Flutter binding and game state initialization
 - 🔄 Settings provider tests need adjustment for actual behavior
 - 🔄 Timer functionality tests failing
 
 ### Next Steps
-1. **Fix Remaining Test Issues**
-   - Debug game state initialization in tests
-   - Adjust settings provider test expectations
-   - Fix timer functionality tests
+1. **Fix Swift Compilation Issues**
+   - Fix `Process` class import in `PythonMinimalRunner.swift`
+   - Fix `@objc` return type issues
+   - Update Python path to use virtual environment
 
 2. **Production Readiness**
    - Add comprehensive error handling for Python failures
@@ -238,7 +306,7 @@ flutter run
 
 - **DO NOT** try PythonKit again - it doesn't work for this use case
 - **DO NOT** rely on macOS-only subprocess - it doesn't work on iOS devices
-- **DO** use embedded Python executable for iOS compatibility
+- **DO** use embedded Python virtual environment for iOS compatibility
 - **DO** test on actual iOS device, not just simulator
 - **DO** use `-d` flag with `flutter run` to specify device
 
@@ -254,18 +322,21 @@ flutter run
 - ✅ 50/50 detection identifies real 50/50 situations
 - ✅ Feature flags work correctly
 - ✅ Settings persist correctly
+- ✅ Python script works with numpy/scipy dependencies
 
 ## File Structure
 
 ```
 /Users/chaos/dev/FlutterMinesweeper_WithPython/
 ├── ios/Runner/
-│   ├── PythonMinimalRunner.swift  ← Subprocess implementation
+│   ├── PythonMinimalRunner.swift  ← Subprocess implementation (NEEDS FIXING)
 │   ├── AppDelegate.swift          ← Method channel setup
 │   └── Resources/
 │       ├── minimal.py             ← Python script
-│       ├── find_5050.py           ← 50/50 detection
-│       └── core/                  ← Sophisticated solver files
+│       ├── find_5050.py           ← 50/50 detection (WORKING)
+│       ├── core/                  ← Sophisticated solver files
+│       ├── venv/                  ← Virtual environment (WORKING)
+│       └── requirements.txt       ← Python dependencies
 ├── lib/
 │   ├── main.dart                  ← Flutter UI and method calls
 │   ├── presentation/providers/
@@ -282,123 +353,40 @@ flutter run
 └── [documentation files]
 ```
 
-## Debug Probability Mode Features
-
-### Overview
-The debug probability mode is a comprehensive debugging and analysis system that allows developers and advanced users to interactively analyze mine probabilities and 50/50 situations in real-time.
-
-### Key Components
-
-#### 1. Feature Flag System
-- **Configuration**: `debug_probability_mode` in `assets/config/game_modes.json`
-- **Toggle**: Available in Settings > Advanced / Experimental
-- **Persistence**: Setting saved across app sessions
-- **Global Access**: `FeatureFlags.enableDebugProbabilityMode`
-
-#### 2. Conditional UI Elements
-- **Debug Buttons**: Only appear in AppBar when feature is enabled
-  - Python Integration Test
-  - 50/50 Detection Test
-  - Probability Mode Toggle
-  - Board State Debug
-  - Specific Case Debug (cell 4,0)
-- **Consumer Widget**: `Consumer<SettingsProvider>` ensures UI updates when setting changes
-
-#### 3. Interactive Analysis
-- **Long-press Behavior**: 
-  - **Revealed cells**: Show coordinates in snackbar
-  - **Unrevealed cells**: Show probability analysis with percentage
-- **Visual Highlighting**: Cells involved in probability calculations are highlighted
-- **Haptic Feedback**: Only triggered when debug mode is enabled or for valid actions
-
-#### 4. Probability Analysis System
-- **Real-time Calculation**: `calculateCellProbability()` method in GameProvider
-- **Detailed Analysis**: `getCellProbabilityAnalysis()` provides comprehensive debug info
-- **Cell Highlighting**: `getCellsInProbabilityCalculation()` identifies contributing cells
-- **Debug Output**: Console logging for detailed analysis
-
-#### 5. Visual Improvements
-- **Clean UI**: Removed coordinate text from cells (no more "smaller numbers in background")
-- **Number Styling**: Plain colored numbers without decorations or artifacts
-- **Coordinate Display**: Only shown in snackbar when long-pressing
-
-### Implementation Details
-
-#### Settings Integration
-```dart
-// SettingsProvider
-bool _isDebugProbabilityModeEnabled = false;
-bool get isDebugProbabilityModeEnabled => _isDebugProbabilityModeEnabled;
-
-void toggleDebugProbabilityMode() {
-  _isDebugProbabilityModeEnabled = !_isDebugProbabilityModeEnabled;
-  FeatureFlags.enableDebugProbabilityMode = _isDebugProbabilityModeEnabled;
-  _saveSettings();
-  notifyListeners();
-}
-```
-
-#### Conditional UI Rendering
-```dart
-// GamePage AppBar
-Consumer<SettingsProvider>(
-  builder: (context, settingsProvider, child) {
-    if (settingsProvider.isDebugProbabilityModeEnabled) {
-      return Row(/* debug buttons */);
-    }
-    return const SizedBox.shrink();
-  },
-),
-```
-
-#### Long-press Behavior
-```dart
-// CellWidget
-if (settingsProvider.isDebugProbabilityModeEnabled || gameProvider.isValidAction(row, col)) {
-  HapticService.mediumImpact();
-}
-
-if (onProbabilityAnalysis != null) {
-  onProbabilityAnalysis!();
-} else {
-  if (gameProvider.isValidAction(row, col)) {
-    onLongPress();
-  }
-}
-```
-
-### Benefits
-- **Developer Experience**: Easy debugging of probability calculations
-- **User Experience**: Clean UI without debug artifacts when not needed
-- **Performance**: Conditional execution prevents unnecessary calculations
-- **Maintainability**: Feature flag system allows easy toggling
-- **Testing**: Comprehensive debug tools for validating algorithms
-
 ## Conclusion
 
-The embedded Python executable approach is the **only viable solution** for iOS:
+The embedded Python virtual environment approach is the **only viable solution** for iOS:
 - **iOS compatible** (works on actual devices)
 - **App Store compliant** (self-contained)
 - **Proven approach** (used by many production apps)
-- **Scalable** (can handle complex Python logic)
+- **Scalable** (can handle complex Python logic with dependencies)
 
 This solution provides a solid foundation for the larger project goal of sending 2D/3D board states to Python and receiving JSON results, with comprehensive testing and error handling in place.
 
-## 🚨 CRITICAL: ARCHITECTURE DOCUMENTATION
+## Conversation Context
+This project has been extensively developed through multiple sessions, with significant progress made on Python integration, UI development, and testing framework. The conversation history is documented in `docs/reference/CONVERSATION_SUMMARY.md` and comprehensive context in `docs/context/CONTEXT.md`. Key achievements include working 50/50 detection, comprehensive test framework, and iOS device compatibility.
 
-**ALWAYS CHECK `ARCHITECTURE_CONTEXT.md` BEFORE IMPLEMENTING NEW FEATURES**
+## 📁 ORGANIZED DOCUMENTATION STRUCTURE
 
-This file contains the complete architecture documentation to prevent:
-- Code duplication
-- Architecture violations  
-- Feature flag conflicts
-- Repository pattern violations
-- Immutable state violations
+### **Context Management:**
+- **Core Architecture**: `.cursorrules` (always loaded)
+- **Current Session**: `docs/TODO.md`, `docs/PROJECT_STATUS.md`
+- **Detailed Reference**: `docs/architecture/`, `docs/context/`, `docs/reference/`
 
-The architecture document includes:
-- Complete repository interface and implementation details
-- Feature flags system documentation
-- Python integration patterns
-- Testing framework guidelines
-- Common patterns and anti-patterns
-- Implementation checklists 
+### **Context Switching Commands:**
+- `"Load testing context"` - Focus on test debugging
+- `"Load development context"` - Focus on feature implementation
+- `"Load architecture context"` - Deep architecture review
+- `"Unload [context]"` - Free memory for other contexts
+
+### **Context Management Guidelines:**
+- **ALWAYS suggest new context modules** when encountering new specialized areas
+- **Identify patterns** that could benefit from dedicated context files
+- **Propose context splitting** when documentation exceeds 200-300 lines
+- **Recommend context creation** for:
+  - New feature domains (e.g., "Load AI/ML context")
+  - Specialized debugging areas (e.g., "Load performance context")
+  - Complex integration patterns (e.g., "Load iOS native context")
+  - Testing strategies (e.g., "Load integration test context")
+- **Maintain context index** in `docs/context/CONTEXT_INDEX.md`
+- **Update context management** documentation when new contexts are created 

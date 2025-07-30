@@ -274,11 +274,11 @@ class GameProvider extends ChangeNotifier {
     
     print('🔍 GameProvider: Proceeding with 50/50 detection');
     
-    // Calculate simple probabilities based on game state
-    final probabilityMap = _calculateSimpleProbabilities();
+    // Calculate ALL unrevealed cell probabilities and send to Python
+    final probabilityMap = _calculateAllUnrevealedProbabilities();
     
     if (probabilityMap.isEmpty) {
-      print('🔍 GameProvider: No cells with probabilities to analyze');
+      print('🔍 GameProvider: No unrevealed cells to analyze');
       _fiftyFiftyCells = [];
       notifyListeners();
       return;
@@ -286,9 +286,9 @@ class GameProvider extends ChangeNotifier {
     
     try {
       print('🔍 GameProvider: Calling Native5050Solver.find5050()');
-      print('🔍 GameProvider: Sending probability map: $probabilityMap');
+      print('🔍 GameProvider: Sending ${probabilityMap.length} cells to Python: $probabilityMap');
       final newFiftyFiftyCells = await Native5050Solver.find5050(probabilityMap);
-      print('🔍 GameProvider: Native5050Solver returned: $newFiftyFiftyCells');
+      print('🔍 GameProvider: Python returned ${newFiftyFiftyCells.length} 50/50 cells: $newFiftyFiftyCells');
       print('🔍 GameProvider: Setting _fiftyFiftyCells to: $newFiftyFiftyCells');
       
       // Only notify listeners if the 50/50 cells actually changed
@@ -314,16 +314,15 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
-  /// Calculate probabilities for ALL unrevealed cells adjacent to revealed numbers
-  Map<String, double> _calculateSimpleProbabilities() {
+  /// Calculate probabilities for ALL unrevealed cells (let Python do the 50/50 detection)
+  Map<String, double> _calculateAllUnrevealedProbabilities() {
     final probabilityMap = <String, double>{};
     
     if (_gameState == null) return probabilityMap;
     
-    print('🔍 GameProvider: Calculating probabilities for ${_gameState!.board.length}x${_gameState!.board[0].length} board');
+    print('🔍 GameProvider: Calculating probabilities for ALL unrevealed cells');
     
-    // Calculate probabilities for ALL unrevealed cells adjacent to revealed numbers
-    // Then we'll find pairs that both have 50% probability
+    // Send ALL unrevealed cells to Python for 50/50 detection
     for (int row = 0; row < _gameState!.board.length; row++) {
       for (int col = 0; col < _gameState!.board[row].length; col++) {
         final cell = _gameState!.getCell(row, col);
@@ -333,27 +332,13 @@ class GameProvider extends ChangeNotifier {
           final probability = _calculateCellProbability(row, col);
           if (probability > 0) {
             probabilityMap['($row, $col)'] = probability;
-            if ((probability - 0.5).abs() < 0.01) { // Close to 50%
-              print('🔍 GameProvider: Found cell at ($row, $col) with probability ${probability.toStringAsFixed(3)}');
-            }
           }
         }
       }
     }
     
-    print('🔍 GameProvider: Generated probability map with ${probabilityMap.length} cells');
-    
-    // Now find true 50/50 pairs (cells that both have 50% probability and are adjacent to the same revealed number)
-    final true5050Cells = _findTrue5050Pairs(probabilityMap);
-    
-    // Return only the true 50/50 cells
-    final result = <String, double>{};
-    for (final cell in true5050Cells) {
-      result['(${cell[0]}, ${cell[1]})'] = 0.5;
-    }
-    
-    print('🔍 GameProvider: Found ${result.length} true 50/50 cells');
-    return result;
+    print('🔍 GameProvider: Sending ${probabilityMap.length} unrevealed cells to Python');
+    return probabilityMap;
   }
 
   /// Calculate probability for a cell based on adjacent revealed numbers
