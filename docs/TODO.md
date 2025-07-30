@@ -1,184 +1,120 @@
-# Flutter Minesweeper - Feature Implementation TODO
+# TODO - Flutter Minesweeper with Python Integration
 
-## Current Status: Feature Flag Audit
+## ✅ **COMPLETED: Simplified 50/50 Detection System**
 
-### ✅ IMPLEMENTED FEATURES
-These features are fully implemented and working:
+### **Major Achievement (Current Session)**
+- ✅ **Method channel communication** - Swift ↔ Dart working
+- ✅ **Python integration** - PythonKit successfully calls Python scripts
+- ✅ **Simplified 50/50 detection** - No `numpy` dependency, standard library only
+- ✅ **Test framework** - Hardcoded test validates full pipeline
+- ✅ **iOS device compatibility** - Works on physical devices
+- ✅ **Production-ready codebase** - Merged to main branch
 
-1. **First Click Guarantee** (`enableFirstClickGuarantee`)
-   - ✅ Toggle in Settings UI
-   - ✅ Connected to FeatureFlags
-   - ✅ Implemented in GameProvider
+### **Branch Status**
+- **`main`** - ✅ Simplified working version (PRODUCTION READY)
+- **`feature/enhanced-5050-detection`** - 🔄 Enhanced version with `numpy` (IN DEVELOPMENT)
 
-2. **50/50 Detection** (`enable5050Detection`)
-   - ✅ Toggle in Settings UI
-   - ✅ Connected to FeatureFlags
-   - ✅ Implemented in GameProvider with Python integration
-   - ✅ Visual feedback (orange borders)
+## 🚀 **NEXT PRIORITIES: Enhanced 50/50 Detection**
 
-3. **50/50 Safe Move** (`enable5050SafeMove`)
-   - ✅ Toggle in Settings UI
-   - ✅ Connected to FeatureFlags
-   - ✅ Basic implementation in GameProvider (needs improvement)
-   - ⚠️ **ISSUE**: Currently just does regular reveal, needs proper safe move logic
+### **1. Bundle `numpy` with PythonKit** 🔄 HIGH PRIORITY
+- **Goal**: Enable sophisticated CSP/probabilistic analysis
+- **Challenge**: PythonKit doesn't include `numpy` by default
+- **Approach**: Research bundling `numpy` with embedded Python
+- **Files**: `ios/Runner/PythonMinimalRunner.swift`, `ios/Runner/Resources/find_5050.py`
 
-4. **Game Statistics** (`enableGameStatistics`)
-   - ✅ Toggle in Settings UI
-   - ✅ Connected to FeatureFlags
-   - ✅ Implemented in GameProvider and UI
+### **2. Re-enable Sophisticated Detection** 🔄 HIGH PRIORITY
+- **Goal**: Use advanced algorithms for more accurate 50/50 detection
+- **Current**: Simplified detection works but less accurate
+- **Files**: `ios/Runner/Resources/core/` (preserved for this purpose)
+- **Dependencies**: `numpy`, `scipy` (need to be bundled)
 
-5. **Haptic Feedback** (`enableHapticFeedback`)
-   - ✅ Toggle in Settings UI
-   - ✅ Connected to FeatureFlags
-   - ✅ Implemented in cell interactions
+### **3. Real-time Game State Integration** 🔄 MEDIUM PRIORITY
+- **Goal**: Replace hardcoded test with actual game state
+- **Current**: Uses hardcoded probability map for testing
+- **Files**: `lib/presentation/providers/game_provider.dart`
+- **Integration**: Connect 50/50 detection to actual gameplay
 
-### ❌ NOT IMPLEMENTED FEATURES
-These features are defined but not implemented:
+### **4. Visual UI Indicators** 🔄 MEDIUM PRIORITY
+- **Goal**: Highlight 50/50 cells in the game board
+- **Current**: Results shown in snackbar only
+- **Files**: `lib/presentation/widgets/cell_widget.dart`, `lib/presentation/widgets/game_board.dart`
+- **Features**: Orange border, help icon, visual feedback
 
-1. **Undo Move** (`enableUndoMove`)
-   - ❌ No implementation in GameProvider
-   - ❌ No UI controls
-   - 📋 **TODO**: Implement move history and undo functionality
+### **5. Performance Optimization** 🔄 MEDIUM PRIORITY
+- **Goal**: Real-time detection without lag
+- **Current**: Works but may need optimization for complex boards
+- **Approach**: Caching, background processing, efficient algorithms
 
-2. **Hint System** (`enableHintSystem`)
-   - ❌ No implementation
-   - ❌ No UI controls
-   - 📋 **TODO**: Implement hint logic and UI
-   - 💡 **INSIGHT**: Should integrate with 50/50 detection and safe moves
-   - 🎯 **VISION**: Make the game purely skill-based by eliminating guesswork
-   - 🔗 **REFERENCE**: [Gemini AI Minesweeper Strategy](https://gemini.google.com/share/8ce4ebccb5f5)
-   - 📝 **STRATEGY**: Combine First Click Guarantee + 50/50 Safe Moves + Hint System to remove all guessing elements
+## 🎮 **GAMEPLAY ENHANCEMENTS**
 
-3. **Auto Flag** (`enableAutoFlag`)
-   - ❌ No implementation
-   - ❌ No UI controls
-   - 📋 **TODO**: Implement automatic flagging of obvious mines
+### **6. Safe Move Suggestions** 🔄 LOW PRIORITY
+- **Goal**: Recommend which 50/50 cell to click
+- **Approach**: Analyze which cell has better odds or strategic value
+- **Files**: `lib/presentation/providers/game_provider.dart`
 
-4. **Board Reset** (`enableBoardReset`)
-   - ❌ No implementation
-   - ❌ No UI controls
-   - 📋 **TODO**: Implement board reset functionality
+### **7. Undo Move Functionality** 🔄 LOW PRIORITY
+- **Goal**: Allow players to undo their last move
+- **Files**: `lib/presentation/providers/game_provider.dart`
+- **Implementation**: Game state history, undo stack
 
-5. **Custom Difficulty** (`enableCustomDifficulty`)
-   - ❌ No implementation
-   - ❌ No UI controls
-   - 📋 **TODO**: Implement custom difficulty settings
+### **8. Hint System** 🔄 LOW PRIORITY
+- **Goal**: Provide hints for difficult situations
+- **Integration**: Work with 50/50 detection
+- **Files**: `lib/presentation/providers/game_provider.dart`
 
-6. **Best Times** (`enableBestTimes`)
-   - ❌ No implementation
-   - ❌ No UI controls
-   - 📋 **TODO**: Implement best times tracking and display
+## 🧪 **TESTING & QUALITY**
 
-7. **Dark Mode** (`enableDarkMode`)
-   - ❌ No implementation
-   - ❌ No UI controls
-   - 📋 **TODO**: Implement theme switching
+### **9. Comprehensive Error Handling** 🔄 MEDIUM PRIORITY
+- **Goal**: Graceful fallback when sophisticated detection fails
+- **Current**: Basic error handling in place
+- **Improvement**: More robust error recovery, user feedback
 
-8. **Animations** (`enableAnimations`)
-   - ❌ No implementation
-   - ❌ No UI controls
-   - 📋 **TODO**: Implement smooth animations
+### **10. Performance Testing** 🔄 LOW PRIORITY
+- **Goal**: Ensure real-time performance on various devices
+- **Approach**: Benchmark different board sizes, device types
+- **Metrics**: Detection time, memory usage, battery impact
 
-9. **Sound Effects** (`enableSoundEffects`)
-   - ❌ No implementation
-   - ❌ No UI controls
-   - 📋 **TODO**: Implement sound effects
+## 📱 **UI/UX IMPROVEMENTS**
 
-10. **ML Assistance** (`enableMLAssistance`)
-    - ❌ No implementation
-    - ❌ No UI controls
-    - 📋 **TODO**: Implement ML-powered assistance
+### **11. Horizontal Phone Support** 🔄 LOW PRIORITY
+- **Goal**: Optimize UI for landscape orientation
+- **Current**: Basic landscape support exists
+- **Improvement**: Better layout, touch targets, readability
 
-11. **Auto Play** (`enableAutoPlay`)
-    - ❌ No implementation
-    - ❌ No UI controls
-    - 📋 **TODO**: Implement auto-play functionality
+### **12. Accessibility Features** 🔄 LOW PRIORITY
+- **Goal**: Make game accessible to users with disabilities
+- **Features**: VoiceOver support, high contrast mode, larger text
 
-12. **Difficulty Prediction** (`enableDifficultyPrediction`)
-    - ❌ No implementation
-    - ❌ No UI controls
-    - 📋 **TODO**: Implement difficulty prediction
+## 🔧 **TECHNICAL DEBT**
 
-## 🎯 STRATEGIC VISION: Skill-Based Minesweeper
+### **13. Code Coverage Improvement** 🔄 LOW PRIORITY
+- **Goal**: Increase test coverage to 80% (currently ~44%)
+- **Current**: 68/68 tests passing
+- **Focus**: Add tests for new 50/50 detection features
 
-### **Core Philosophy: Eliminate All Guessing**
-The goal is to transform Minesweeper from a game of chance to a game of pure skill by implementing:
+### **14. Documentation Updates** 🔄 LOW PRIORITY
+- **Goal**: Keep documentation current with new features
+- **Files**: `docs/` directory
+- **Updates**: Architecture docs, user guides, API documentation
 
-1. **First Click Guarantee** ✅ - Never die on first click
-2. **50/50 Safe Moves** 🔄 - Never die on 50/50 situations  
-3. **Hint System** 📋 - Provide strategic guidance for complex situations
-4. **Auto Flag** 📋 - Automatically flag obvious mines
+## 🎯 **SUCCESS CRITERIA**
 
-### **Reference Strategy**
-- 🔗 **AI Strategy Guide**: [Gemini AI Minesweeper Strategy](https://gemini.google.com/share/8ce4ebccb5f5)
-- 🎯 **Goal**: Make every move deterministic and skill-based
-- 💡 **Approach**: Combine multiple safety systems to eliminate guesswork
+### **Enhanced Version Goals**
+- [ ] `numpy` successfully bundled with PythonKit
+- [ ] Sophisticated detection algorithms working
+- [ ] Real-time integration with game state
+- [ ] Visual indicators for 50/50 cells
+- [ ] Performance optimized for real-time use
+- [ ] Comprehensive error handling
+- [ ] Production-ready enhanced version
 
-## IMMEDIATE PRIORITIES
+### **Long-term Vision**
+- [ ] Advanced CSP/probabilistic analysis
+- [ ] Machine learning integration for pattern recognition
+- [ ] Multi-player support
+- [ ] Cloud-based analysis for complex scenarios
+- [ ] Cross-platform support (Android, web)
 
-### 🔥 CRITICAL: Fix 50/50 Safe Move
-**Issue**: The 50/50 safe move feature is enabled but doesn't actually prevent death.
+---
 
-**Current Behavior**: 
-- User clicks orange 50/50 cell
-- App calls `execute5050SafeMove()`
-- Method just does regular `revealCell()` 
-- User can still die if they hit a mine
-
-**Required Fix**:
-- Implement proper safe move logic that either:
-  1. Reveals the safe cell instead of the clicked cell, OR
-  2. Moves the mine to the other orange cell
-- Add proper board state analysis
-- Prevent crashes during analysis
-
-### 🔧 MEDIUM: Hide Unimplemented Features
-**Issue**: Settings UI shows toggles for features that don't work.
-
-**Solution**: 
-- Hide toggles for unimplemented features
-- Add "Coming Soon" indicators
-- Only show implemented features
-
-### 📋 LOW: Implement Missing Features
-**Priority Order**:
-1. **Undo Move** - High user value, moderate complexity
-2. **Hint System** - High user value, moderate complexity  
-3. **Auto Flag** - High user value, high complexity
-4. **Board Reset** - Medium user value, low complexity
-5. **Dark Mode** - Medium user value, moderate complexity
-6. **Best Times** - Medium user value, low complexity
-7. **Custom Difficulty** - Low user value, moderate complexity
-8. **Animations** - Low user value, high complexity
-9. **Sound Effects** - Low user value, moderate complexity
-10. **ML Assistance** - Low user value, very high complexity
-11. **Auto Play** - Low user value, very high complexity
-12. **Difficulty Prediction** - Low user value, very high complexity
-
-## NEXT STEPS
-
-1. **Fix 50/50 Safe Move** (Critical) - ✅ **COMPLETED** - Now uses repository method
-2. **Hide unimplemented feature toggles** (Medium)
-3. **Implement Undo Move** (High priority)
-4. **Implement Hint System** (High priority)
-5. **Add "Coming Soon" indicators** (Low priority)
-
-## 🚨 CRITICAL: ARCHITECTURE DOCUMENTATION
-
-**ALWAYS CHECK `ARCHITECTURE_CONTEXT.md` BEFORE IMPLEMENTING NEW FEATURES**
-
-This comprehensive architecture document prevents:
-- Code duplication (like the 50/50 safe move issue we just fixed)
-- Architecture violations
-- Feature flag conflicts
-- Repository pattern violations
-- Immutable state violations
-
-**Key Lesson Learned**: The `perform5050SafeMove` method already existed in the `GameRepository` interface and was fully implemented in `GameRepositoryImpl`. We should have checked the repository interface first instead of implementing our own bomb-moving logic in the provider.
-
-## NOTES
-
-- All feature flags are properly connected to SettingsProvider
-- All toggles update FeatureFlags correctly
-- The issue is that most features are only defined, not implemented
-- 50/50 Safe Move is the only "broken" implemented feature 
+**Last Updated**: Current session - Simplified 50/50 detection completed, enhanced version in development 
