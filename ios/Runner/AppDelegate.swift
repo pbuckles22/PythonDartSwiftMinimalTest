@@ -31,7 +31,7 @@ import Flutter
         print("🔔 Swift: Calling PythonMinimalRunner.find5050Situations()")
         
         guard let args = call.arguments as? [String: Any],
-              let inputData = args["probabilityMap"] as? [String: Double] else {
+              let inputData = args["probabilityMap"] as? [AnyHashable: Any] else {
           print("🔔 Swift: Invalid arguments for find5050Situations")
           result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid arguments for find5050Situations", details: nil))
           return

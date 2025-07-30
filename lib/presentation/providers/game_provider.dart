@@ -17,6 +17,7 @@ class GameProvider extends ChangeNotifier {
 
   // 50/50 detection state
   List<List<int>> _fiftyFiftyCells = [];
+  Set<String> _logged5050Cells = {}; // Track logged cells to prevent spam
   List<List<int>> get fiftyFiftyCells => _fiftyFiftyCells;
   
   // Probability analysis highlighting state
@@ -291,7 +292,7 @@ class GameProvider extends ChangeNotifier {
       print('🔍 GameProvider: Python returned ${newFiftyFiftyCells.length} 50/50 cells: $newFiftyFiftyCells');
       print('🔍 GameProvider: Setting _fiftyFiftyCells to: $newFiftyFiftyCells');
       
-      // Only notify listeners if the 50/50 cells actually changed
+      // Only update and notify if the 50/50 cells actually changed
       bool hasChanged = _fiftyFiftyCells.length != newFiftyFiftyCells.length;
       if (!hasChanged) {
         for (int i = 0; i < _fiftyFiftyCells.length; i++) {
@@ -304,8 +305,12 @@ class GameProvider extends ChangeNotifier {
       }
       
       if (hasChanged) {
+        print('🔍 GameProvider: 50/50 cells changed, updating UI');
         _fiftyFiftyCells = newFiftyFiftyCells;
+        _logged5050Cells.clear(); // Clear logged cells when 50/50 cells change
         notifyListeners();
+      } else {
+        print('🔍 GameProvider: 50/50 cells unchanged, skipping UI update');
       }
     } catch (e) {
       print('DEBUG: 50/50 detection failed: $e');
@@ -479,87 +484,33 @@ class GameProvider extends ChangeNotifier {
 
   /// Check if a cell is part of a true 50/50 situation (exactly 2 cells with 0.5 probability)
   bool _isTrue5050Cell(int row, int col) {
-    // A true 50/50 requires exactly 2 unrevealed cells that are both adjacent to the same revealed number
-    // and that revealed number needs exactly 1 more mine
-    
-    final revealedNeighbors = _getRevealedNeighbors(row, col);
-    
-    for (final neighbor in revealedNeighbors) {
-      final neighborRow = neighbor[0];
-      final neighborCol = neighbor[1];
-      final neighborCell = _gameState!.getCell(neighborRow, neighborCol);
-      
-      if (neighborCell.isRevealed && neighborCell.bombsAround > 0) {
-        // Get unrevealed neighbors of this revealed cell
-        final unrevealedNeighbors = _getUnrevealedNeighbors(neighborRow, neighborCol);
-        final flaggedNeighbors = _getFlaggedNeighbors(neighborRow, neighborCol);
-        
-        // Check if this revealed cell needs exactly 1 more mine and has exactly 2 unrevealed neighbors
-        final remainingMines = neighborCell.bombsAround - flaggedNeighbors.length;
-        
-        print('🔍 DEBUG: Cell ($row, $col) - neighbor ($neighborRow, $neighborCol) has $remainingMines remaining mines and ${unrevealedNeighbors.length} unrevealed neighbors');
-        
-        if (unrevealedNeighbors.length == 2 && remainingMines == 1) {
-          print('🔍 DEBUG: Cell ($row, $col) - potential 50/50 situation found!');
+    // Check if this cell is part of a true 50/50 situation
+    for (List<int> cell in _fiftyFiftyCells) {
+      if (cell[0] == row && cell[1] == col) {
+        // Only log once per cell to avoid spam
+        String cellKey = '$row,$col';
+        if (!_logged5050Cells.contains(cellKey)) {
+          _logged5050Cells.add(cellKey);
           
-          // Check if this cell is one of the two unrevealed neighbors
-          bool isThisCellUnrevealed = false;
-          List<int> otherUnrevealedCell = [-1, -1];
-          
-          for (final unrevealed in unrevealedNeighbors) {
-            if (unrevealed[0] == row && unrevealed[1] == col) {
-              isThisCellUnrevealed = true;
-            } else {
-              otherUnrevealedCell = unrevealed;
+          // Find the other cell in this 50/50 pair
+          List<int>? otherCell;
+          for (List<int> other in _fiftyFiftyCells) {
+            if (other[0] != row || other[1] != col) {
+              otherCell = other;
+              break;
             }
           }
           
-          if (isThisCellUnrevealed && otherUnrevealedCell[0] != -1) {
-            print('🔍 DEBUG: Cell ($row, $col) - is one of the two unrevealed neighbors, other is (${otherUnrevealedCell[0]}, ${otherUnrevealedCell[1]})');
-            
-            // For now, let's simplify and just check if both cells are adjacent to the same revealed number
-            // and that revealed number needs exactly 1 more mine
-            // This is the basic 50/50 situation
-            
-            // Check if the other unrevealed cell has any additional revealed neighbors
-            final otherRevealedNeighbors = _getRevealedNeighbors(otherUnrevealedCell[0], otherUnrevealedCell[1]);
-            bool hasAdditionalInfo = false;
-            
-            for (final otherNeighbor in otherRevealedNeighbors) {
-              // Skip the original revealed cell we're already considering
-              if (otherNeighbor[0] == neighborRow && otherNeighbor[1] == neighborCol) {
-                continue;
-              }
-              
-              final otherNeighborCell = _gameState!.getCell(otherNeighbor[0], otherNeighbor[1]);
-              if (otherNeighborCell.isRevealed && otherNeighborCell.bombsAround > 0) {
-                // If this other revealed cell has different unrevealed neighbors or different mine count,
-                // it might provide additional information that breaks the 50/50
-                final otherUnrevealedNeighbors = _getUnrevealedNeighbors(otherNeighbor[0], otherNeighbor[1]);
-                final otherFlaggedNeighbors = _getFlaggedNeighbors(otherNeighbor[0], otherNeighbor[1]);
-                final otherRemainingMines = otherNeighborCell.bombsAround - otherFlaggedNeighbors.length;
-                
-                print('🔍 DEBUG: Other cell (${otherUnrevealedCell[0]}, ${otherUnrevealedCell[1]}) has additional neighbor (${otherNeighbor[0]}, ${otherNeighbor[1]}) with $otherRemainingMines remaining mines and ${otherUnrevealedNeighbors.length} unrevealed neighbors');
-                
-                // If the other revealed cell has a different pattern, it might provide additional info
-                if (otherUnrevealedNeighbors.length != 2 || otherRemainingMines != 1) {
-                  hasAdditionalInfo = true;
-                  print('🔍 DEBUG: Additional info found - breaking 50/50');
-                  break;
-                }
-              }
-            }
-            
-            if (!hasAdditionalInfo) {
-              print('🔍 DEBUG: Cell ($row, $col) - CONFIRMED as true 50/50!');
-              return true; // This is a true 50/50 situation
-            }
+          if (otherCell != null) {
+            print('🎯 50/50 PAIR: [($row, $col), (${otherCell[0]}, ${otherCell[1]})] - Cell ($row, $col) has bomb: ${_gameState!.board[row][col].hasBomb}');
+          } else {
+            print('🎯 50/50 SINGLE: Cell ($row, $col) has bomb: ${_gameState!.board[row][col].hasBomb}');
           }
         }
+        return true;
       }
     }
-    
-    return false; // Not a true 50/50 situation
+    return false;
   }
 
   /// Calculate the real probability for a cell (public method for UI)
@@ -939,8 +890,13 @@ class GameProvider extends ChangeNotifier {
   bool isCellIn5050Situation(int row, int col) {
     final is5050 = _fiftyFiftyCells.any((cell) => cell[0] == row && cell[1] == col);
     if (is5050 && _gameState != null) {
-      final cell = _gameState!.getCell(row, col);
-      print('🎯 50/50 DEBUG: Cell ($row, $col) is 50/50 cell with bomb: ${cell.hasBomb}');
+      // Only log once per cell to avoid spam
+      String cellKey = 'is5050_$row,$col';
+      if (!_logged5050Cells.contains(cellKey)) {
+        _logged5050Cells.add(cellKey);
+        final cell = _gameState!.getCell(row, col);
+        print('🎯 50/50 DEBUG: Cell ($row, $col) is 50/50 cell with bomb: ${cell.hasBomb}');
+      }
     }
     return is5050;
   }

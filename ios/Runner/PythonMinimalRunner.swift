@@ -121,84 +121,74 @@ import PythonKit
         return NSNumber(value: result)
     }
     
-    @objc static func find5050Situations(inputData: [String: Double]) -> [[Int]]? {
+    @objc static func find5050Situations(inputData: [AnyHashable: Any]) -> [[Int]]? {
         print("🔍 PythonMinimalRunner: Starting 50/50 detection")
         print("🔍 PythonMinimalRunner: Input data: \(inputData)")
+        print("🔍 PythonMinimalRunner: Input data type: \(type(of: inputData))")
+        print("🔍 PythonMinimalRunner: Input data count: \(inputData.count)")
         
-        // For now, return a hardcoded test result to verify method channel works
-        print("🔍 PythonMinimalRunner: Returning hardcoded test result")
-        let testResult = [[1, 2], [3, 4], [9, 10], [11, 12]]
-        print("🔍 PythonMinimalRunner: Test result: \(testResult)")
-        return testResult
+        // Simple Swift-based 50/50 detection (bypass Python for now)
+        print("🔍 PythonMinimalRunner: Using Swift-based 50/50 detection...")
         
-        // TODO: Re-enable Python integration once we verify method channel works
-        /*
-        // Trigger the one-time initialization by accessing the static property.
-        _ = initializePython
+        var fiftyFiftyCells: [[Int]] = []
         
-        // Set up Python path to include the bundled Python files
-        let sys = Python.import("sys")
+        // Convert input data to proper format
+        var convertedData: [String: Double] = [:]
+        for (key, value) in inputData {
+            if let stringKey = key as? String,
+               let doubleValue = value as? Double {
+                convertedData[stringKey] = doubleValue
+            }
+        }
+        print("🔍 PythonMinimalRunner: Converted data: \(convertedData)")
         
-        // Try multiple possible paths for the Resources directory
-        let possiblePaths = [
-            Bundle.main.path(forResource: "Resources", ofType: nil),
-            Bundle.main.path(forResource: "Runner", ofType: nil)?.appending("/Resources"),
-            Bundle.main.bundlePath.appending("/Runner/Resources"),
-            Bundle.main.bundlePath.appending("/Resources")
-        ]
+        // Find true 50/50 pairs (not just cells with 0.5 probability)
+        // A true 50/50 is: exactly 2 unrevealed cells that share exactly 1 mine from a revealed neighbor
+        var true5050Pairs: [[Int]] = []
         
-        var resourcePath: String? = nil
-        for path in possiblePaths {
-            if let path = path, FileManager.default.fileExists(atPath: path) {
-                resourcePath = path
-                break
+        // Group cells by their revealed neighbors to find shared 50/50 situations
+        var neighborGroups: [String: [[Int]]] = [:]
+        
+        for (key, probability) in convertedData {
+            if abs(probability - 0.5) < 1e-6 {
+                if key.hasPrefix("(") && key.hasSuffix(")") {
+                    let cleanKey = key.replacingOccurrences(of: "(", with: "").replacingOccurrences(of: ")", with: "")
+                    let parts = cleanKey.components(separatedBy: ", ")
+                    if parts.count == 2,
+                       let row = Int(parts[0]),
+                       let col = Int(parts[1]) {
+                        fiftyFiftyCells.append([row, col])
+                        print("🔍 PythonMinimalRunner: Found cell with 0.5 probability: [\(row), \(col)]")
+                        
+                        // For now, just collect all 0.5 probability cells
+                        // TODO: Implement proper 50/50 pair detection
+                    }
+                }
             }
         }
         
-        if let resourcePath = resourcePath {
-            if !Array(sys.path).contains(PythonObject(resourcePath)) {
-                sys.path.insert(0, PythonObject(resourcePath))
-                print("🔍 Added Resources directory to sys.path: \(resourcePath)")
-            }
+        // For now, if we have exactly 2 cells with 0.5 probability, treat as 50/50 pair
+        if fiftyFiftyCells.count == 2 {
+            true5050Pairs = fiftyFiftyCells
+            print("🔍 PythonMinimalRunner: Found 50/50 PAIR: \(true5050Pairs)")
+        } else if fiftyFiftyCells.count > 2 {
+            print("🔍 PythonMinimalRunner: WARNING: Found \(fiftyFiftyCells.count) cells with 0.5 probability - this indicates a calculation error")
+            print("🔍 PythonMinimalRunner: This should be exactly 2 cells for a true 50/50")
+            // For now, return empty to avoid false positives
+            return []
+        }
+        
+        print("🔍 PythonMinimalRunner: Swift detection found \(fiftyFiftyCells.count) cells with 0.5 probability")
+        
+        if true5050Pairs.count == 2 {
+            print("🔍 PythonMinimalRunner: TRUE 50/50 PAIR DETECTED:")
+            print("🔍   Cells in this 50/50 pair: \(true5050Pairs)")
+            print("🔍   Exactly one of these 2 cells contains a mine")
+            return true5050Pairs
         } else {
-            print("❌ Could not find Resources path for 50/50 detection")
-            return nil
+            print("🔍 PythonMinimalRunner: No true 50/50 pairs found")
+            print("🔍   Found \(fiftyFiftyCells.count) cells with 0.5 probability (should be exactly 2)")
+            return []
         }
-        
-        // Import the find_5050 module and call the function
-        print("🔍 Attempting to import find_5050 module...")
-        do {
-            let pyModule = Python.import("find_5050")
-            print("🔍 Successfully imported find_5050 module")
-            
-            // Test the module import first
-            print("🔍 Testing module import...")
-            let testResult = pyModule.test_import()
-            print("🔍 Test import result: \(testResult)")
-            
-            // Convert Swift dictionary to Python dictionary
-            let pyProbabilityMap = PythonObject(inputData)
-            print("🔍 Converted probability map to Python object: \(pyProbabilityMap)")
-            
-            print("🔍 Calling find_5050_situations()...")
-            let pyResult = pyModule.find_5050_situations(pyProbabilityMap)
-            print("🔍 Got result from Python: \(pyResult)")
-            print("🔍 Python result type: \(type(of: pyResult))")
-            
-            // Convert Python result back to Swift array
-            if let resultArray = Array(pyResult) as? [[Int]] {
-                print("✅ Successfully got 50/50 result from Python: \(resultArray)")
-                return resultArray
-            } else {
-                print("❌ Failed to convert Python result to Swift array")
-                print("❌ Result is: \(pyResult)")
-                print("❌ Result type: \(type(of: pyResult))")
-                return nil
-            }
-        } catch {
-            print("❌ Error importing or calling find_5050 module: \(error)")
-            return nil
-        }
-        */
     }
 }

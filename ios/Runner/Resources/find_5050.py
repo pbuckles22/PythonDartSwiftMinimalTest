@@ -61,17 +61,34 @@ def find_5050_situations(probability_map):
         List of [row, col] coordinates that are part of 50/50 situations
     """
     print(f"🔍 Starting 50/50 detection with {len(probability_map)} cells", file=sys.stderr)
+    print(f"🔍 Input probability_map: {probability_map}", file=sys.stderr)
+    print(f"🔍 Input type: {type(probability_map)}", file=sys.stderr)
     
     # Use simple detection (no sophisticated solver needed)
-    return find_5050_situations_simple(probability_map)
+    result = find_5050_situations_simple(probability_map)
+    print(f"🔍 Returning result: {result}", file=sys.stderr)
+    return result
 
 if __name__ == "__main__":
+    print("🐍 find_5050.py main script starting...", file=sys.stderr)
+    print(f"🐍 Python version: {sys.version}", file=sys.stderr)
+    
     # Read input from stdin (JSON format)
     input_data = sys.stdin.read()
-    probability_map = json.loads(input_data)
+    print(f"🐍 Received stdin data: {input_data}", file=sys.stderr)
+    
+    try:
+        probability_map = json.loads(input_data)
+        print(f"🐍 Parsed probability_map: {probability_map}", file=sys.stderr)
+    except Exception as e:
+        print(f"🐍 Error parsing JSON: {e}", file=sys.stderr)
+        print("[]")
+        sys.exit(1)
     
     # Find 50/50 situations
     result = find_5050_situations(probability_map)
     
     # Output result as JSON
-    print(json.dumps(result)) 
+    print(f"🐍 Final result: {result}", file=sys.stderr)
+    print(json.dumps(result))
+    print("🐍 find_5050.py main script finished", file=sys.stderr) 
