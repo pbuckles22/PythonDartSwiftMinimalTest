@@ -31,6 +31,8 @@ class _GameBoardState extends State<GameBoard> {
   // Add scroll controllers to maintain scroll position
   final ScrollController _horizontalScrollController = ScrollController();
   final ScrollController _verticalScrollController = ScrollController();
+  
+
 
   void _debugBoardAndCellSize(int rows, int columns, double expectedCellSize) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -63,6 +65,8 @@ class _GameBoardState extends State<GameBoard> {
     _verticalScrollController.dispose();
     super.dispose();
   }
+  
+
 
   void _maybeAdjustCellSize(int rows, double availableHeight, double spacing) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -181,7 +185,9 @@ class _GameBoardState extends State<GameBoard> {
                               // _debugBoardAndCellSize(rows, columns, cellSize);
                             },
                             onProbabilityAnalysis: GameProvider.onProbabilityAnalysisRequested != null 
-                                ? () => GameProvider.onProbabilityAnalysisRequested!(row, col)
+                                ? () {
+                                    GameProvider.onProbabilityAnalysisRequested!(row, col);
+                                  }
                                 : null,
                           ),
                         );

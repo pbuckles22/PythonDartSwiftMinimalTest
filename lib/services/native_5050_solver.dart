@@ -5,13 +5,15 @@ class Native5050Solver {
 
   /// Calls the native Swift/PythonKit 50/50 solver.
   /// [probabilityMap] should be a Map<String, double> where keys are '(row, col)' strings.
+  /// [sensitivity] controls the detection range (0.1 = 40-60%, 0.05 = 45-55%, 0.2 = 30-70%).
   /// Returns a List<List<int>> of 50/50 cell coordinates.
-  static Future<List<List<int>>> find5050(Map<String, double> probabilityMap) async {
+  static Future<List<List<int>>> find5050(Map<String, double> probabilityMap, {double sensitivity = 0.1}) async {
     try {
       print('🔍 Native5050Solver: Calling find5050Situations with probability map: $probabilityMap');
       
       final result = await _channel.invokeMethod('find5050Situations', {
         'probabilityMap': probabilityMap,
+        'sensitivity': sensitivity,
       }).timeout(
         const Duration(seconds: 5),
         onTimeout: () {

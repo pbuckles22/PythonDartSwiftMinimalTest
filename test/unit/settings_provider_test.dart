@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/foundation.dart';
 import 'package:python_flutter_embed_demo/presentation/providers/settings_provider.dart';
 import 'package:python_flutter_embed_demo/core/feature_flags.dart';
 import 'package:python_flutter_embed_demo/core/game_mode_config.dart';
@@ -167,51 +168,123 @@ void main() {
 
     group('50/50 Detection Settings', () {
       test('should toggle 50/50 detection', () {
-        // Default is 'true' from JSON config
+        // Default is true from JSON config
         expect(settingsProvider.is5050DetectionEnabled, true);
         
-        // Toggle to false
+        // Toggle off
         settingsProvider.toggle5050Detection();
         expect(settingsProvider.is5050DetectionEnabled, false);
+        expect(FeatureFlags.enable5050Detection, false);
         
-        // Toggle back to true
+        // Toggle back on
         settingsProvider.toggle5050Detection();
         expect(settingsProvider.is5050DetectionEnabled, true);
+        expect(FeatureFlags.enable5050Detection, true);
       });
 
-      test('should disable safe move when 50/50 detection is disabled', () {
-        // Both features are enabled by default from JSON config
+      test('should toggle 50/50 safe move', () {
+        // Default is true from JSON config
         expect(settingsProvider.is5050SafeMoveEnabled, true);
-        expect(settingsProvider.is5050DetectionEnabled, true);
         
-        // Disable 50/50 detection
+        // Toggle off
+        settingsProvider.toggle5050SafeMove();
+        expect(settingsProvider.is5050SafeMoveEnabled, false);
+        expect(FeatureFlags.enable5050SafeMove, false);
+        
+        // Toggle back on
+        settingsProvider.toggle5050SafeMove();
+        expect(settingsProvider.is5050SafeMoveEnabled, true);
+        expect(FeatureFlags.enable5050SafeMove, true);
+      });
+
+      test('should disable safe move when detection is disabled', () {
+        // Start with both enabled
+        expect(settingsProvider.is5050DetectionEnabled, true);
+        expect(settingsProvider.is5050SafeMoveEnabled, true);
+        
+        // Disable detection
         settingsProvider.toggle5050Detection();
         expect(settingsProvider.is5050DetectionEnabled, false);
         expect(settingsProvider.is5050SafeMoveEnabled, false); // Should be disabled automatically
+        expect(FeatureFlags.enable5050Detection, false);
+        expect(FeatureFlags.enable5050SafeMove, false);
       });
 
-      test('should toggle 50/50 safe move only when detection is enabled', () {
-        // Disable 50/50 detection first
+      test('should not enable safe move when detection is disabled', () {
+        // Disable detection first
         settingsProvider.toggle5050Detection();
         expect(settingsProvider.is5050DetectionEnabled, false);
-        expect(settingsProvider.is5050SafeMoveEnabled, false); // Auto-disabled when detection is disabled
         
-        // Try to enable safe move - should not work (early return, no change)
+        // Try to enable safe move
         settingsProvider.toggle5050SafeMove();
-        expect(settingsProvider.is5050SafeMoveEnabled, false); // Should remain false
+        expect(settingsProvider.is5050SafeMoveEnabled, false); // Should remain disabled
+        expect(FeatureFlags.enable5050SafeMove, false);
+      });
+
+      test('should initialize with default sensitivity value', () {
+        expect(settingsProvider.fiftyFiftySensitivity, 0.1);
+        expect(FeatureFlags.fiftyFiftySensitivity, 0.1);
+      });
+
+      test('should update 50/50 sensitivity', () {
+        // Default sensitivity
+        expect(settingsProvider.fiftyFiftySensitivity, 0.1);
         
-        // Enable 50/50 detection
-        settingsProvider.toggle5050Detection();
-        expect(settingsProvider.is5050DetectionEnabled, true);
-        expect(settingsProvider.is5050SafeMoveEnabled, false); // Still false from before
+        // Update to different values
+        settingsProvider.updateFiftyFiftySensitivity(0.05);
+        expect(settingsProvider.fiftyFiftySensitivity, 0.05);
+        expect(FeatureFlags.fiftyFiftySensitivity, 0.05);
         
-        // Now safe move should work - toggle from false to true
-        settingsProvider.toggle5050SafeMove();
-        expect(settingsProvider.is5050SafeMoveEnabled, true);
+        settingsProvider.updateFiftyFiftySensitivity(0.2);
+        expect(settingsProvider.fiftyFiftySensitivity, 0.2);
+        expect(FeatureFlags.fiftyFiftySensitivity, 0.2);
+      });
+
+      test('should handle sensitivity callback mechanism', () {
+        bool callbackCalled = false;
+        VoidCallback testCallback = () {
+          callbackCalled = true;
+        };
         
-        // Toggle safe move back to false
-        settingsProvider.toggle5050SafeMove();
-        expect(settingsProvider.is5050SafeMoveEnabled, false);
+        // Set callback
+        settingsProvider.set5050SensitivityCallback(testCallback);
+        
+        // Update sensitivity - should trigger callback
+        settingsProvider.updateFiftyFiftySensitivity(0.15);
+        
+        // Verify callback was called
+        expect(callbackCalled, true);
+      });
+
+      test('should handle null callback gracefully', () {
+        // Should not throw when no callback is set
+        expect(() => settingsProvider.updateFiftyFiftySensitivity(0.12), returnsNormally);
+      });
+
+      test('should reset sensitivity to default on reset', () {
+        // Change sensitivity
+        settingsProvider.updateFiftyFiftySensitivity(0.15);
+        expect(settingsProvider.fiftyFiftySensitivity, 0.15);
+        
+        // Reset to defaults
+        settingsProvider.resetToDefaults();
+        
+        // Should be back to default
+        expect(settingsProvider.fiftyFiftySensitivity, 0.1);
+        expect(FeatureFlags.fiftyFiftySensitivity, 0.1);
+      });
+
+      test('should load sensitivity from config', () {
+        // Set a custom sensitivity
+        settingsProvider.updateFiftyFiftySensitivity(0.08);
+        expect(settingsProvider.fiftyFiftySensitivity, 0.08);
+        
+        // Reload settings from config
+        settingsProvider.loadSettingsFromConfig();
+        
+        // Should be back to default from config
+        expect(settingsProvider.fiftyFiftySensitivity, 0.1);
+        expect(FeatureFlags.fiftyFiftySensitivity, 0.1);
       });
     });
 

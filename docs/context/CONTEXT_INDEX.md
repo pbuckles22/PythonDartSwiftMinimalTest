@@ -13,6 +13,7 @@ Start with `AGENT_CONTEXT.md` for immediate understanding, then reference specif
 - `CONTEXT_PYTHON_INTEGRATION.md` - **Python integration details** (150 lines) - Technical Python implementation
 - `CONTEXT_UI_UX.md` - **UI/UX implementation** (180 lines) - Interface and user experience
 - `CONTEXT_TESTING.md` - **Testing framework** (200 lines) - Test implementation and issues
+- `CONTEXT_UNIMPLEMENTED_FEATURES.md` - **Unimplemented features** (250 lines) - Future feature planning and priorities
 - `CONTEXT.md` - **Complete technical architecture** (384 lines) - Full implementation details
 - `CONVERSATION_SUMMARY.md` - **Historical context** (433 lines) - Past decisions/attempts
 
@@ -37,6 +38,11 @@ Start with `AGENT_CONTEXT.md` for immediate understanding, then reference specif
 2. `CONTEXT_TESTING.md` - Testing framework details
 3. `PROJECT_STATUS.md` - Check current test issues
 
+### For **Feature Planning** (New features, implementation priorities, roadmap)
+1. `AGENT_CONTEXT.md` - Understand current architecture
+2. `CONTEXT_UNIMPLEMENTED_FEATURES.md` - Unimplemented features and priorities
+3. `PROJECT_STATUS.md` - Check current implementation status
+
 ### For **Quick Questions** (Simple bugs, basic functionality)
 1. `AGENT_CONTEXT.md` - Get the gist
 2. `PROJECT_STATUS.md` - Check current state
@@ -60,6 +66,7 @@ Start with `AGENT_CONTEXT.md` for immediate understanding, then reference specif
 - `CONTEXT_PYTHON_INTEGRATION.md` - Only when working on Python integration
 - `CONTEXT_UI_UX.md` - Only when working on UI/UX
 - `CONTEXT_TESTING.md` - Only when working on testing
+- `CONTEXT_UNIMPLEMENTED_FEATURES.md` - Only when planning new features
 - `CONTEXT.md` - Only when working on technical implementation
 - `CONVERSATION_SUMMARY.md` - Only when understanding historical decisions
 - `README.md` - Only when setting up or documenting
@@ -80,6 +87,7 @@ Start with `AGENT_CONTEXT.md` for immediate understanding, then reference specif
    - Python work → `CONTEXT_PYTHON_INTEGRATION.md`
    - UI work → `CONTEXT_UI_UX.md`
    - Testing work → `CONTEXT_TESTING.md`
+   - Feature planning → `CONTEXT_UNIMPLEMENTED_FEATURES.md`
 4. **Use this index** to know which file to reference for specific tasks
 
 ## Context File Purposes
@@ -91,6 +99,7 @@ Start with `AGENT_CONTEXT.md` for immediate understanding, then reference specif
 | `CONTEXT_PYTHON_INTEGRATION.md` | Python details | Python work | 150 | 📚 On-demand |
 | `CONTEXT_UI_UX.md` | UI implementation | UI/UX work | 180 | 📚 On-demand |
 | `CONTEXT_TESTING.md` | Testing framework | Testing work | 200 | 📚 On-demand |
+| `CONTEXT_UNIMPLEMENTED_FEATURES.md` | Unimplemented features | Feature planning | 250 | 📚 On-demand |
 | `CONTEXT.md` | Technical architecture | Deep implementation | 384 | 📚 On-demand |
 | `CONVERSATION_SUMMARY.md` | Historical context | Understanding decisions | 433 | 📚 On-demand |
 | `README.md` | Documentation | Setup/usage | 187 | 📖 On-demand |
@@ -114,6 +123,12 @@ Total: ~380 lines (vs. 1,495 lines)
 ```
 AGENT_CONTEXT.md + PROJECT_STATUS.md + CONTEXT_TESTING.md
 Total: ~400 lines (vs. 1,495 lines)
+```
+
+### Feature Planning Tasks
+```
+AGENT_CONTEXT.md + PROJECT_STATUS.md + CONTEXT_UNIMPLEMENTED_FEATURES.md
+Total: ~450 lines (vs. 1,495 lines)
 ```
 
 ### Quick Questions

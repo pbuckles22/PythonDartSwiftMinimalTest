@@ -1,108 +1,149 @@
 # Flutter Minesweeper with Python Integration - Project Status
 
-## 🎉 **CURRENT STATUS: WORKING SIMPLIFIED 50/50 DETECTION**
+## 🎯 **Current Status: ✅ TRUE 50/50 DETECTION WORKING**
 
-### **✅ Major Achievement: Simplified Detection System Complete**
+### **Major Achievement: True 50/50 Detection Complete**
+- **✅ Python Integration**: Embedded Python working with proper environment setup
+- **✅ 50/50 Detection**: Sophisticated algorithm finds true 50/50 pairs
+- **✅ Dart Validation**: Post-processing ensures only valid pairs are accepted
+- **✅ Safe Move Implementation**: 50/50 safe move functionality working
+- **✅ UI Integration**: Visual indicators for 50/50 cells and safe moves
 
-**Branch**: `main` (merged from `bug/5050-safe-moves-issue`)
-**Status**: ✅ **PRODUCTION READY**
+### **Current Challenge: Mine Number Calculation**
+**Issue**: When a mine is revealed during 50/50 safe move, the cell appears blank with no number
+**Requirement**: Calculate what number should be displayed in the mine cell
+**Safety Constraints**: 
+- Must be minimal blast radius (only affect the specific cell)
+- Only for last single cell revealed during 50/50 safe move
+- Must maintain game consistency
 
-### **What Works Now**
-1. **✅ Method Channel Communication** - Swift ↔ Dart communication verified
-2. **✅ Python Integration** - PythonKit successfully calls Python scripts
-3. **✅ Simplified 50/50 Detection** - No `numpy` dependency, uses standard library
-4. **✅ Test Framework** - Hardcoded test validates the full pipeline
-5. **✅ iOS Device Compatibility** - Works on physical iOS devices
-6. **✅ Real-time Detection** - Can detect 50/50 situations during gameplay
+## 🏗️ **Technical Architecture**
 
-### **Test Results**
-```
-Command Line Test:
-🔍 Starting 50/50 detection with 6 cells
-❌ NumPy not available: No module named 'numpy'
-⚠️ Falling back to simple detection due to missing dependencies
-🎯 Simple detection found 4 50/50 cells
-[[1, 2], [3, 4], [9, 10], [11, 12]]
+### **Python Integration (✅ Working)**
+- **Embedded Python**: Bundled Python executable in iOS app
+- **Environment Setup**: Proper `PYTHONPATH` and module discovery
+- **50/50 Detection**: `find_5050_situations_simple()` algorithm
+- **Side-adjacent Logic**: Only accepts cells that are side-adjacent (not corner-adjacent)
+- **Multiple Pairs**: Can find and return multiple 50/50 pairs in one call
 
-iOS App Test:
-flutter: 🔍 Native5050Solver: Received result: [[1, 2], [3, 4], [9, 10], [11, 12]]
-flutter: 🔔 Dart: Python 50/50 detection result: [[1, 2], [3, 4], [9, 10], [11, 12]]
-```
+### **Dart Validation (✅ Working)**
+- **Post-processing**: `_findTrue5050Pairs()` validates Python results
+- **Shared Neighbor Check**: Ensures both cells in pair share a revealed neighbor
+- **Board State Integration**: Uses actual game state for validation
+- **Debug Logging**: Clear output showing validation results
 
-## 🔧 **Technical Architecture**
+### **Safe Move Implementation (✅ Working)**
+- **50/50 Safe Move**: `perform5050SafeMove()` selects one cell from validated pair
+- **Game State Update**: Properly updates board state after safe move
+- **UI Feedback**: Shows safe move completion and game status
 
-### **Data Flow**
-1. **Flutter UI** → Lightning bolt button triggers `_test5050Detection()`
-2. **Dart** → `Native5050Solver.find5050(probabilityMap)` 
-3. **Method Channel** → `python/minimal` channel calls Swift
-4. **Swift** → `PythonMinimalRunner.find5050Situations(inputData)`
-5. **Python** → `find_5050.py` processes data and returns 50/50 cells
-6. **Return** → Results flow back through the same path
+## 📊 **Feature Status**
 
-### **Key Files**
-- `lib/services/native_5050_solver.dart` - Dart-side method channel interface
-- `ios/Runner/AppDelegate.swift` - Method channel handler
-- `ios/Runner/PythonMinimalRunner.swift` - Swift Python integration
-- `ios/Runner/Resources/find_5050.py` - Python 50/50 detection script
-- `lib/presentation/pages/game_page.dart` - UI test button
+### **✅ Completed Features**
+- [x] Python 1+1 integration working
+- [x] Minesweeper UI fully functional
+- [x] 50/50 detection Python integration
+- [x] Feature flags system
+- [x] Settings persistence
+- [x] Comprehensive test framework
+- [x] Scroll position bug fixes
+- [x] Board movement optimizations
+- [x] **True 50/50 detection with validation**
+- [x] **50/50 safe move functionality**
+- [x] **Visual 50/50 indicators**
+
+### **🔄 Current Development**
+- [ ] **Mine number calculation for revealed mines**
+- [ ] **Safety constraints for mine calculation**
+- [ ] **Testing mine calculation accuracy**
+
+### **🎯 Next Phase Goals**
+- [ ] Add comprehensive error handling for Python failures
+- [ ] Optimize Python performance for real-time detection
+- [ ] Add undo move functionality
+- [ ] Add hint system
+- [ ] Add auto-flag functionality
+
+## 🔧 **Key Implementation Files**
+
+### **Swift Files**
+- `ios/Runner/PythonMinimalRunner.swift` - Subprocess implementation
+- `ios/Runner/AppDelegate.swift` - Method channel setup
+
+### **Python Files**
+- `ios/Runner/Resources/minimal.py` - Python script that prints result
+- `ios/Runner/Resources/find_5050.py` - 50/50 detection logic
+- `ios/Runner/Resources/core/` - Sophisticated CSP/Probabilistic solver files
+
+### **Flutter Files**
+- `lib/main.dart` - UI and method channel calls
+- `lib/presentation/providers/game_provider.dart` - Game state management
+- `lib/presentation/providers/settings_provider.dart` - Settings management
+- `lib/services/native_5050_solver.dart` - Python integration bridge
 
 ## 🎮 **User Experience**
 
-### **How to Test**
-1. **Enable Debug Mode**: Set `debug_probability_mode: true` in `game_modes.json`
-2. **Launch App**: Run on iOS device or simulator
-3. **Test 50/50 Detection**: Tap the psychology icon (⚡) in the debug toolbar
-4. **View Results**: Blue snackbar shows detected 50/50 cells
+### **Current Working Features**
+- **50/50 Detection**: Automatically finds true 50/50 situations during gameplay
+- **Visual Indicators**: Orange borders and help icons on 50/50 cells
+- **Safe Move**: Lightning bolt button to safely reveal one cell from 50/50 pair
+- **Real-time Updates**: Detection updates as game state changes
+- **Validation**: Only shows true 50/50 situations (no false positives)
 
-### **Expected Behavior**
-- **Hardcoded Test**: Returns `[[1, 2], [3, 4], [9, 10], [11, 12]]` (test data)
-- **Real Game**: Will detect actual 50/50 situations in gameplay
-- **Visual Feedback**: 50/50 cells should be highlighted in the UI
+### **Current Issue**
+- **Mine Display**: When a mine is revealed during safe move, it appears blank instead of showing a number
 
-## 🚀 **Next Phase: Enhanced Detection**
+## 🚀 **Development Commands**
 
-### **Current Branch Structure**
-- **`main`** - ✅ Simplified working version (PRODUCTION READY)
-- **`feature/enhanced-5050-detection`** - 🔄 Enhanced version with `numpy` (IN DEVELOPMENT)
+```bash
+# Run on iOS Simulator
+flutter run -d C7D05565-7D5F-4C8C-AB95-CDBFAE7BA098
 
-### **Enhanced Version Goals**
-1. **Bundle `numpy` with PythonKit** - For sophisticated CSP/probabilistic analysis
-2. **Real-time Detection** - Integrate with actual game state instead of hardcoded test
-3. **Visual Indicators** - Highlight 50/50 cells in the game board
-4. **Safe Move Suggestions** - Recommend which 50/50 cell to click
+# Run on iOS Device
+flutter run -d 00008130-00127CD40AF0001C
 
-### **Technical Challenges to Solve**
-1. **PythonKit + `numpy`** - Bundle `numpy` with embedded Python
-2. **Performance Optimization** - Real-time detection without lag
-3. **UI Integration** - Visual feedback for detected 50/50 situations
-4. **Error Handling** - Graceful fallback when sophisticated detection fails
+# Run tests
+flutter test
 
-## 📊 **Success Metrics**
+# Run specific test file
+flutter test test/unit/game_provider_test.dart
 
-### **✅ Achieved (Simplified Version)**
-- [x] Method channel communication works
-- [x] Python script executes successfully
-- [x] 50/50 detection algorithm works
-- [x] Test framework validates the pipeline
-- [x] iOS device compatibility confirmed
-- [x] Real-time detection capability
-- [x] Production-ready codebase
+# Run test runner script
+./test_runner.sh
+```
 
-### **🔄 Next Phase Goals (Enhanced Version)**
-- [ ] Bundle `numpy` with PythonKit
-- [ ] Re-enable sophisticated detection algorithms
-- [ ] Visual UI indicators for 50/50 cells
-- [ ] Performance optimization for real-time use
-- [ ] Comprehensive error handling
-- [ ] Advanced CSP/probabilistic analysis
+## 📈 **Success Metrics**
 
-## 🎯 **Conclusion**
+### **✅ Achieved**
+- ✅ App builds without errors
+- ✅ Flutter UI displays correctly
+- ✅ Python integration working end-to-end
+- ✅ 50/50 detection identifies real 50/50 situations
+- ✅ Feature flags work correctly
+- ✅ Settings persist correctly
+- ✅ **True 50/50 detection with validation**
+- ✅ **50/50 safe move functionality**
+- ✅ **Visual feedback for 50/50 cells**
 
-The simplified 50/50 detection system is **fully functional** and ready for gameplay testing. The foundation is solid for building the enhanced version with sophisticated detection algorithms.
+### **🔄 In Progress**
+- 🔄 Mine number calculation for revealed mines
+- 🔄 Safety constraints for mine calculation
 
-**Current Status**: ✅ **PRODUCTION READY** - Users can play with 50/50 detection enabled
-**Next Phase**: 🔄 **Enhanced Detection** - Working on sophisticated algorithms with `numpy`
+## 🎯 **Next Steps**
 
----
+### **Immediate Priority**
+1. **Implement Mine Number Calculation**: Add logic to calculate proper number for revealed mine cells
+2. **Safety Constraints**: Ensure calculation only happens for 50/50 safe moves
+3. **Minimal Impact**: Limit calculation to only the specific mine cell
+4. **Testing**: Verify calculation accuracy and game consistency
 
-**Last Updated**: Current session - Simplified 50/50 detection successfully implemented and merged to main 
+### **Technical Approach**
+- **CopyTo Logic**: Implement in the copyTo area for minimal blast radius
+- **Single Cell Only**: Only calculate for the last single cell revealed during 50/50 safe move
+- **Game Consistency**: Ensure the calculated number maintains game logic integrity
+
+## 📝 **Conclusion**
+
+The project has achieved a major milestone with working true 50/50 detection and safe move functionality. The current challenge of mine number calculation is a refinement that will improve the user experience by showing proper numbers for revealed mines during safe moves.
+
+**Status: True 50/50 detection working, implementing mine number calculation for revealed mines.** 

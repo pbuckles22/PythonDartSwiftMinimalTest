@@ -3,33 +3,49 @@ import '../../core/feature_flags.dart';
 import '../../core/game_mode_config.dart';
 
 class SettingsProvider extends ChangeNotifier {
-  // Game mode settings
+  // --- Settings state ---
   bool _isFirstClickGuaranteeEnabled = true;
-  bool _isClassicMode = false; // Classic vs Kickstarter mode
-  
-  // 50/50 detection settings
+  bool _isClassicMode = false;
+  bool _isKickstarterMode = false;
   bool _is5050DetectionEnabled = false;
   bool _is5050SafeMoveEnabled = false;
+  double _fiftyFiftySensitivity = 0.1; // Default: 40-60% range
+  String _selectedDifficulty = 'hard';
   
-  // Difficulty settings
-  String _selectedDifficulty = 'hard'; // Will be overridden by JSON config when loaded
-
-  // --- New: User-facing feature flags ---
+  // --- Unimplemented features (removed from UI) ---
   bool _isUndoMoveEnabled = false;
   bool _isHintSystemEnabled = false;
   bool _isAutoFlagEnabled = false;
   bool _isBoardResetEnabled = false;
   bool _isCustomDifficultyEnabled = false;
-  bool _isGameStatisticsEnabled = true;
+  bool _isGameStatisticsEnabled = false;
   bool _isBestTimesEnabled = false;
   bool _isDarkModeEnabled = false;
   bool _isAnimationsEnabled = false;
   bool _isSoundEffectsEnabled = false;
-  bool _isHapticFeedbackEnabled = true;
+  bool _isHapticFeedbackEnabled = false;
   bool _isMLAssistanceEnabled = false;
   bool _isAutoPlayEnabled = false;
   bool _isDifficultyPredictionEnabled = false;
+  bool _isDebugModeEnabled = false;
   bool _isDebugProbabilityModeEnabled = false;
+  bool _isPerformanceMetricsEnabled = false;
+  bool _isTestModeEnabled = false;
+
+  // --- Callback for 50/50 sensitivity changes ---
+  VoidCallback? _on5050SensitivityChanged;
+
+  // --- Constructor ---
+  SettingsProvider() {
+    // Don't call _loadSettings() in constructor - it will be called after GameModeConfig is loaded
+    // The constructor should not do async work
+    notifyListeners(); // Ensure listeners are notified after loading settings
+  }
+
+  // --- Set callback for 50/50 sensitivity changes ---
+  void set5050SensitivityCallback(VoidCallback callback) {
+    _on5050SensitivityChanged = callback;
+  }
 
   // --- Getters for new flags ---
   bool get isFirstClickGuaranteeEnabled => _isFirstClickGuaranteeEnabled;
@@ -37,6 +53,7 @@ class SettingsProvider extends ChangeNotifier {
   bool get isKickstarterMode => !_isClassicMode;
   bool get is5050DetectionEnabled => _is5050DetectionEnabled;
   bool get is5050SafeMoveEnabled => _is5050SafeMoveEnabled;
+  double get fiftyFiftySensitivity => _fiftyFiftySensitivity;
   String get selectedDifficulty => _selectedDifficulty;
   bool get isUndoMoveEnabled => _isUndoMoveEnabled;
   bool get isHintSystemEnabled => _isHintSystemEnabled;
@@ -53,13 +70,6 @@ class SettingsProvider extends ChangeNotifier {
   bool get isAutoPlayEnabled => _isAutoPlayEnabled;
   bool get isDifficultyPredictionEnabled => _isDifficultyPredictionEnabled;
   bool get isDebugProbabilityModeEnabled => _isDebugProbabilityModeEnabled;
-
-  // Initialize settings
-  SettingsProvider() {
-    // Don't call _loadSettings() in constructor - it will be called after GameModeConfig is loaded
-    // The constructor should not do async work
-    notifyListeners(); // Ensure listeners are notified after loading settings
-  }
 
   // Load settings from GameModeConfig (should be called after GameModeConfig is loaded)
   void loadSettingsFromConfig() {
@@ -110,6 +120,26 @@ class SettingsProvider extends ChangeNotifier {
     
     _saveSettings();
     notifyListeners();
+  }
+
+  // Update 50/50 detection sensitivity
+  void updateFiftyFiftySensitivity(double sensitivity) {
+    _fiftyFiftySensitivity = sensitivity;
+    
+    // Update feature flags
+    FeatureFlags.fiftyFiftySensitivity = sensitivity;
+    
+    print('🔧 SETTINGS: 50/50 Sensitivity updated to: $sensitivity');
+    print('🔧 SETTINGS: FeatureFlags.fiftyFiftySensitivity = ${FeatureFlags.fiftyFiftySensitivity}');
+    
+    _saveSettings();
+    notifyListeners();
+    
+    // Trigger callback to update 50/50 detection immediately
+    if (_on5050SensitivityChanged != null) {
+      print('🔧 SETTINGS: Triggering 50/50 detection update due to sensitivity change');
+      _on5050SensitivityChanged!();
+    }
   }
 
   // --- Toggle methods for new flags ---
@@ -254,6 +284,7 @@ class SettingsProvider extends ChangeNotifier {
     _isClassicMode = !GameModeConfig.instance.defaultKickstarterMode;
     _is5050DetectionEnabled = GameModeConfig.instance.default5050Detection;
     _is5050SafeMoveEnabled = GameModeConfig.instance.default5050SafeMove;
+    _fiftyFiftySensitivity = 0.1; // Use default sensitivity
     _selectedDifficulty = GameModeConfig.instance.defaultGameMode?.id ?? 'hard';
     
     // Add debug logging
@@ -280,6 +311,12 @@ class SettingsProvider extends ChangeNotifier {
     _isDifficultyPredictionEnabled = GameModeConfig.instance.defaultDifficultyPrediction;
     _isDebugProbabilityModeEnabled = FeatureFlags.enableDebugProbabilityMode;
     
+    // Update global feature flags
+    FeatureFlags.enableFirstClickGuarantee = _isFirstClickGuaranteeEnabled;
+    FeatureFlags.enable5050Detection = _is5050DetectionEnabled;
+    FeatureFlags.enable5050SafeMove = _is5050SafeMoveEnabled;
+    FeatureFlags.fiftyFiftySensitivity = _fiftyFiftySensitivity;
+    
     // Note: Feature flags are set in main.dart from JSON config
     // We only set the internal state here, not the global feature flags
   }
@@ -297,6 +334,7 @@ class SettingsProvider extends ChangeNotifier {
     _isClassicMode = !GameModeConfig.instance.defaultKickstarterMode;
     _is5050DetectionEnabled = GameModeConfig.instance.default5050Detection;
     _is5050SafeMoveEnabled = GameModeConfig.instance.default5050SafeMove;
+    _fiftyFiftySensitivity = 0.1; // Reset to default sensitivity
     _selectedDifficulty = GameModeConfig.instance.defaultGameMode?.id ?? 'hard';
     // --- New: Reset user-facing feature flags from GameModeConfig ---
     _isUndoMoveEnabled = GameModeConfig.instance.defaultUndoMove;
@@ -314,6 +352,13 @@ class SettingsProvider extends ChangeNotifier {
     _isAutoPlayEnabled = GameModeConfig.instance.defaultAutoPlay;
     _isDifficultyPredictionEnabled = GameModeConfig.instance.defaultDifficultyPrediction;
     _isDebugProbabilityModeEnabled = FeatureFlags.enableDebugProbabilityMode;
+    
+    // Update global feature flags
+    FeatureFlags.enableFirstClickGuarantee = _isFirstClickGuaranteeEnabled;
+    FeatureFlags.enable5050Detection = _is5050DetectionEnabled;
+    FeatureFlags.enable5050SafeMove = _is5050SafeMoveEnabled;
+    FeatureFlags.fiftyFiftySensitivity = _fiftyFiftySensitivity;
+    
     // Note: Feature flags are set in main.dart from JSON config
     // We only set the internal state here, not the global feature flags
     _saveSettings();

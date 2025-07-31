@@ -14,6 +14,7 @@ class FeatureFlags {
   static bool enableBestTimes = false; // Best times tracking
   static bool enable5050Detection = false; // Set from JSON in main.dart
   static bool enable5050SafeMove = false; // Set from JSON in main.dart
+  static double fiftyFiftySensitivity = 0.1; // 0.1 = 40-60%, 0.05 = 45-55%, 0.2 = 30-70%
   
   // UI/UX features
   static bool enableDarkMode = false; // Dark mode

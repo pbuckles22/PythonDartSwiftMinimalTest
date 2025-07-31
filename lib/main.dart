@@ -75,7 +75,19 @@ class MinesweeperApp extends StatelessWidget {
             return settingsProvider;
           },
         ),
-        ChangeNotifierProvider(create: (context) => GameProvider()),
+        ChangeNotifierProxyProvider<SettingsProvider, GameProvider>(
+          create: (context) => GameProvider(),
+          update: (context, settingsProvider, gameProvider) {
+            // Set up callback for 50/50 sensitivity changes
+            settingsProvider.set5050SensitivityCallback(() {
+              if (gameProvider != null) {
+                print('🔧 MAIN: Triggering 50/50 detection update from settings change');
+                gameProvider.updateFiftyFiftyDetection();
+              }
+            });
+            return gameProvider ?? GameProvider();
+          },
+        ),
       ],
       child: MaterialApp(
         title: 'Minesweeper with ML',

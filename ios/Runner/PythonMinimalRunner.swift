@@ -25,6 +25,94 @@ import PythonKit
         // 4. Initialize PythonKit
         print("🔍 Successfully initialized embedded PythonKit")
     }()
+    
+    // Shared Python environment setup function
+    private static func setupPythonEnvironment() -> String? {
+        print("🔍 PythonMinimalRunner: Setting up Python environment...")
+        
+        // First, set up the Python standard library path BEFORE importing sys
+        let bundlePath = Bundle.main.bundlePath
+        let pythonStdlibPath = bundlePath + "/python-stdlib"
+        
+        print("🔍 PythonMinimalRunner: Bundle path: \(bundlePath)")
+        print("🔍 PythonMinimalRunner: Python stdlib path: \(pythonStdlibPath)")
+        
+        // Check if python-stdlib exists
+        let stdlibExists = FileManager.default.fileExists(atPath: pythonStdlibPath)
+        print("🔍 PythonMinimalRunner: Python stdlib exists: \(stdlibExists)")
+        
+        if stdlibExists {
+            // Set the PYTHONPATH environment variable to include the stdlib
+            setenv("PYTHONPATH", pythonStdlibPath, 1)
+            print("🔍 PythonMinimalRunner: Set PYTHONPATH to: \(pythonStdlibPath)")
+        }
+        
+        // Now try to import sys
+        do {
+            let sys = Python.import("sys")
+            print("🔍 PythonMinimalRunner: Successfully imported sys")
+            
+            // Add the stdlib path to sys.path if it's not already there
+            if stdlibExists && !Array(sys.path).contains(PythonObject(pythonStdlibPath)) {
+                sys.path.insert(0, PythonObject(pythonStdlibPath))
+                print("🔍 PythonMinimalRunner: Added stdlib to sys.path: \(pythonStdlibPath)")
+            }
+            
+            // Now add the Resources directory for our custom modules
+            let possiblePaths = [
+                Bundle.main.path(forResource: "Resources", ofType: nil),
+                Bundle.main.path(forResource: "Runner", ofType: nil)?.appending("/Resources"),
+                Bundle.main.bundlePath.appending("/Runner/Resources"),
+                Bundle.main.bundlePath.appending("/Resources"),
+                Bundle.main.bundlePath.appending("/Frameworks/Runner.framework/Resources")
+            ]
+            
+            var resourcePath: String? = nil
+            for path in possiblePaths {
+                if let path = path, FileManager.default.fileExists(atPath: path) {
+                    resourcePath = path
+                    break
+                }
+            }
+            
+            if let resourcePath = resourcePath {
+                if !Array(sys.path).contains(PythonObject(resourcePath)) {
+                    sys.path.insert(0, PythonObject(resourcePath))
+                    print("🔍 PythonMinimalRunner: Added Resources directory to sys.path: \(resourcePath)")
+                }
+                return resourcePath
+            } else {
+                print("❌ PythonMinimalRunner: Could not find Resources path. Tried:")
+                for (i, path) in possiblePaths.enumerated() {
+                    print("   \(i+1). \(path ?? "nil")")
+                }
+                
+                // Fallback: search for Python files in the bundle
+                print("🔍 PythonMinimalRunner: Trying fallback: searching for Python files in bundle...")
+                let bundlePath = Bundle.main.bundlePath
+                let fileManager = FileManager.default
+                
+                if let enumerator = fileManager.enumerator(atPath: bundlePath) {
+                    for case let path as String in enumerator {
+                        if path.hasSuffix("minimal.py") || path.hasSuffix("find_5050.py") {
+                            let fullPath = bundlePath.appending("/\(path)")
+                            let directory = fullPath.replacingOccurrences(of: "/\(path)", with: "")
+                            print("🔍 PythonMinimalRunner: Found Python file at: \(fullPath)")
+                            print("🔍 PythonMinimalRunner: Adding directory to sys.path: \(directory)")
+                            sys.path.insert(0, PythonObject(directory))
+                            return directory
+                        }
+                    }
+                }
+                
+                print("❌ PythonMinimalRunner: Still could not find Python files in bundle")
+                return nil
+            }
+        } catch {
+            print("❌ PythonMinimalRunner: Failed to import sys: \(error)")
+            return nil
+        }
+    }
 
     @objc static func addOneAndOne() -> NSNumber? {
         print("🔍 PythonMinimalRunner: Starting embedded Python test - UPDATED VERSION")
@@ -54,57 +142,10 @@ import PythonKit
             }
         }
 
-        // Set up Python path to include the bundled Python files
-        let sys = Python.import("sys")
-        
-        // Try multiple possible paths for the Resources directory
-        let possiblePaths = [
-            Bundle.main.path(forResource: "Resources", ofType: nil),
-            Bundle.main.path(forResource: "Runner", ofType: nil)?.appending("/Resources"),
-            Bundle.main.bundlePath.appending("/Runner/Resources"),
-            Bundle.main.bundlePath.appending("/Resources")
-        ]
-        
-        var resourcePath: String? = nil
-        for path in possiblePaths {
-            if let path = path, FileManager.default.fileExists(atPath: path) {
-                resourcePath = path
-                break
-            }
-        }
-        
-        if let resourcePath = resourcePath {
-            if !Array(sys.path).contains(PythonObject(resourcePath)) {
-                sys.path.insert(0, PythonObject(resourcePath))
-                print("🔍 Added Resources directory to sys.path: \(resourcePath)")
-            }
-        } else {
-            print("❌ Could not find Resources path. Tried:")
-            for (i, path) in possiblePaths.enumerated() {
-                print("   \(i+1). \(path ?? "nil")")
-            }
-            
-            // Fallback: try to find minimal.py directly in the bundle
-            print("🔍 Trying fallback: searching for minimal.py in bundle...")
-            
-            if let enumerator = fileManager.enumerator(atPath: bundlePath) {
-                for case let path as String in enumerator {
-                    if path.hasSuffix("minimal.py") {
-                        let fullPath = bundlePath.appending("/\(path)")
-                        let directory = fullPath.replacingOccurrences(of: "/minimal.py", with: "")
-                        print("🔍 Found minimal.py at: \(fullPath)")
-                        print("🔍 Adding directory to sys.path: \(directory)")
-                        sys.path.insert(0, PythonObject(directory))
-                        resourcePath = directory
-                        break
-                    }
-                }
-            }
-            
-            if resourcePath == nil {
-                print("❌ Still could not find minimal.py in bundle")
-                return nil
-            }
+        // Use shared Python environment setup
+        guard let resourcePath = setupPythonEnvironment() else {
+            print("❌ Could not set up Python environment")
+            return nil
         }
 
         // Import the minimal module and call the function
@@ -121,16 +162,11 @@ import PythonKit
         return NSNumber(value: result)
     }
     
-    @objc static func find5050Situations(inputData: [AnyHashable: Any]) -> [[Int]]? {
+    @objc static func find5050Situations(inputData: [AnyHashable: Any], sensitivity: Double = 0.1) -> [[Int]]? {
         print("🔍 PythonMinimalRunner: Starting 50/50 detection")
         print("🔍 PythonMinimalRunner: Input data: \(inputData)")
         print("🔍 PythonMinimalRunner: Input data type: \(type(of: inputData))")
         print("🔍 PythonMinimalRunner: Input data count: \(inputData.count)")
-        
-        // Simple Swift-based 50/50 detection (bypass Python for now)
-        print("🔍 PythonMinimalRunner: Using Swift-based 50/50 detection...")
-        
-        var fiftyFiftyCells: [[Int]] = []
         
         // Convert input data to proper format
         var convertedData: [String: Double] = [:]
@@ -142,53 +178,104 @@ import PythonKit
         }
         print("🔍 PythonMinimalRunner: Converted data: \(convertedData)")
         
-        // Find true 50/50 pairs (not just cells with 0.5 probability)
-        // A true 50/50 is: exactly 2 unrevealed cells that share exactly 1 mine from a revealed neighbor
-        var true5050Pairs: [[Int]] = []
+        // Use embedded Python with simple detection (no numpy required)
+        print("🔍 PythonMinimalRunner: Using embedded Python with simple detection...")
         
-        // Group cells by their revealed neighbors to find shared 50/50 situations
-        var neighborGroups: [String: [[Int]]] = [:]
+        // Check if we can access the find_5050.py file
+        guard let resourcePath = Bundle.main.resourcePath else {
+            print("❌ Could not get resource path")
+            return nil
+        }
         
-        for (key, probability) in convertedData {
-            if abs(probability - 0.5) < 1e-6 {
-                if key.hasPrefix("(") && key.hasSuffix(")") {
-                    let cleanKey = key.replacingOccurrences(of: "(", with: "").replacingOccurrences(of: ")", with: "")
-                    let parts = cleanKey.components(separatedBy: ", ")
-                    if parts.count == 2,
-                       let row = Int(parts[0]),
-                       let col = Int(parts[1]) {
-                        fiftyFiftyCells.append([row, col])
-                        print("🔍 PythonMinimalRunner: Found cell with 0.5 probability: [\(row), \(col)]")
-                        
-                        // For now, just collect all 0.5 probability cells
-                        // TODO: Implement proper 50/50 pair detection
+        let find5050Path = resourcePath + "/find_5050.py"
+        let fileExists = FileManager.default.fileExists(atPath: find5050Path)
+        print("🔍 find_5050.py exists at \(find5050Path): \(fileExists)")
+        
+        if !fileExists {
+            print("❌ find_5050.py not found")
+            return nil
+        }
+        
+        // Use PythonKit to import and run the simple detection
+        do {
+            // Use shared Python environment setup
+            guard let _ = setupPythonEnvironment() else {
+                print("❌ PythonMinimalRunner: Could not set up Python environment")
+                return nil
+            }
+            
+            // Import the find_5050 module
+            print("🔍 PythonMinimalRunner: Importing find_5050 module...")
+            let find5050Module = Python.import("find_5050")
+            print("🔍 PythonMinimalRunner: Successfully imported find_5050 module")
+            
+            // Convert Swift dictionary to Python dictionary
+            print("🔍 PythonMinimalRunner: Converting data for Python...")
+            let pythonDict = PythonObject(convertedData)
+            print("🔍 PythonMinimalRunner: Converted data: \(pythonDict)")
+            
+            // Call the simple detection function with sensitivity parameter
+            print("🔍 PythonMinimalRunner: Calling find_5050_situations_simple with sensitivity: \(sensitivity)...")
+            let result = find5050Module.find_5050_situations_simple(pythonDict, sensitivity)
+            print("🔍 PythonMinimalRunner: Python result: \(result)")
+            
+            // Convert Python result to Swift with better error handling
+            print("🔍 PythonMinimalRunner: Raw Python result type: \(type(of: result))")
+            print("🔍 PythonMinimalRunner: Raw Python result: \(result)")
+            
+            // Try to convert the Python result safely
+            do {
+                // First try: direct conversion to Array<Array<Int>>
+                if let resultArray = Array<Array<Int>>(result) {
+                    print("🔍 PythonMinimalRunner: Successfully converted to Array<Array<Int>>: \(resultArray)")
+                    return resultArray
+                }
+                
+                // Second try: convert as flat array and then to pairs
+                if let flatArray = Array<Int>(result) {
+                    print("🔍 PythonMinimalRunner: Got flat array: \(flatArray)")
+                    
+                    // Convert flat array to pairs: [r1, c1, r2, c2, ...] -> [[r1, c1], [r2, c2], ...]
+                    var pairs: [[Int]] = []
+                    for i in stride(from: 0, to: flatArray.count, by: 2) {
+                        if i + 1 < flatArray.count {
+                            pairs.append([flatArray[i], flatArray[i + 1]])
+                        }
+                    }
+                    print("🔍 PythonMinimalRunner: Converted to pairs: \(pairs)")
+                    return pairs
+                }
+                
+                // Third try: manual iteration if other methods fail
+                print("🔍 PythonMinimalRunner: Trying manual iteration...")
+                var manualResult: [[Int]] = []
+                let pythonList = PythonObject(result)
+                let length = Int(pythonList.__len__()) ?? 0
+                print("🔍 PythonMinimalRunner: Manual iteration length: \(length)")
+                
+                for i in 0..<length {
+                    let item = pythonList[i]
+                    print("🔍 PythonMinimalRunner: Item \(i): \(item), type: \(type(of: item))")
+                    
+                    if let itemArray = Array<Int>(item) {
+                        manualResult.append(itemArray)
                     }
                 }
+                
+                print("🔍 PythonMinimalRunner: Manual conversion result: \(manualResult)")
+                return manualResult
+                
+            } catch {
+                print("❌ PythonMinimalRunner: Error during conversion: \(error)")
+                return nil
             }
-        }
-        
-        // For now, if we have exactly 2 cells with 0.5 probability, treat as 50/50 pair
-        if fiftyFiftyCells.count == 2 {
-            true5050Pairs = fiftyFiftyCells
-            print("🔍 PythonMinimalRunner: Found 50/50 PAIR: \(true5050Pairs)")
-        } else if fiftyFiftyCells.count > 2 {
-            print("🔍 PythonMinimalRunner: WARNING: Found \(fiftyFiftyCells.count) cells with 0.5 probability - this indicates a calculation error")
-            print("🔍 PythonMinimalRunner: This should be exactly 2 cells for a true 50/50")
-            // For now, return empty to avoid false positives
-            return []
-        }
-        
-        print("🔍 PythonMinimalRunner: Swift detection found \(fiftyFiftyCells.count) cells with 0.5 probability")
-        
-        if true5050Pairs.count == 2 {
-            print("🔍 PythonMinimalRunner: TRUE 50/50 PAIR DETECTED:")
-            print("🔍   Cells in this 50/50 pair: \(true5050Pairs)")
-            print("🔍   Exactly one of these 2 cells contains a mine")
-            return true5050Pairs
-        } else {
-            print("🔍 PythonMinimalRunner: No true 50/50 pairs found")
-            print("🔍   Found \(fiftyFiftyCells.count) cells with 0.5 probability (should be exactly 2)")
-            return []
+            
+            print("❌ PythonMinimalRunner: All conversion attempts failed")
+            return nil
+            
+        } catch {
+            print("❌ PythonMinimalRunner: Error using PythonKit: \(error)")
+            return nil
         }
     }
 }

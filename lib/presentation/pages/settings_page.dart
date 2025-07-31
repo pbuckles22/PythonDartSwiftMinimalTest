@@ -22,6 +22,11 @@ class SettingsPage extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.all(16.0),
             children: [
+              // Board Size Section (moved to top)
+              _buildSectionHeader(context, 'Board Size'),
+              const SizedBox(height: 8),
+              _buildDifficultySelection(context, settingsProvider),
+              const SizedBox(height: 24),
               // Game Mode Section
               _buildSectionHeader(context, 'General Gameplay'),
               const SizedBox(height: 8),
@@ -31,20 +36,10 @@ class SettingsPage extends StatelessWidget {
               const SizedBox(height: 8),
               _buildGeneralGameplayToggles(context, settingsProvider),
               const SizedBox(height: 24),
-              // Appearance & UX Section
-              _buildSectionHeader(context, 'Appearance & UX'),
-              const SizedBox(height: 8),
-              _buildAppearanceToggles(context, settingsProvider),
-              const SizedBox(height: 24),
               // Advanced/Experimental Section
               _buildSectionHeader(context, 'Advanced / Experimental'),
               const SizedBox(height: 8),
               _buildAdvancedToggles(context, settingsProvider),
-              const SizedBox(height: 24),
-              // Board Size Section
-              _buildSectionHeader(context, 'Board Size'),
-              const SizedBox(height: 8),
-              _buildDifficultySelection(context, settingsProvider),
               const SizedBox(height: 24),
               // Reset to Defaults
               _buildResetButton(context, settingsProvider),
@@ -666,91 +661,11 @@ class SettingsPage extends StatelessWidget {
       children: [
         _buildSimpleToggle(
           context,
-          'Undo Move',
-          'Enable undoing your last move',
-          settingsProvider.isUndoMoveEnabled,
-          settingsProvider.toggleUndoMove,
-          disabled: true,
-        ),
-        _buildSimpleToggle(
-          context,
-          'Hint System',
-          'Show hints for possible safe moves',
-          settingsProvider.isHintSystemEnabled,
-          settingsProvider.toggleHintSystem,
-          disabled: true,
-        ),
-        _buildSimpleToggle(
-          context,
-          'Auto-Flag',
-          'Automatically flag obvious mines',
-          settingsProvider.isAutoFlagEnabled,
-          settingsProvider.toggleAutoFlag,
-          disabled: true,
-        ),
-        _buildSimpleToggle(
-          context,
-          'Board Reset',
-          'Allow resetting the board mid-game',
-          settingsProvider.isBoardResetEnabled,
-          settingsProvider.toggleBoardReset,
-          disabled: true,
-        ),
-        _buildSimpleToggle(
-          context,
-          'Custom Difficulty',
-          'Enable custom board size and mine count',
-          settingsProvider.isCustomDifficultyEnabled,
-          settingsProvider.toggleCustomDifficulty,
-          disabled: true,
-        ),
-        _buildSimpleToggle(
-          context,
           'Game Statistics',
           'Show timer and statistics',
           settingsProvider.isGameStatisticsEnabled,
           settingsProvider.toggleGameStatistics,
           disabled: false,
-        ),
-        _buildSimpleToggle(
-          context,
-          'Best Times',
-          'Track and display best times',
-          settingsProvider.isBestTimesEnabled,
-          settingsProvider.toggleBestTimes,
-          disabled: true,
-        ),
-      ],
-    );
-  }
-
-  // --- New Section: Appearance & UX Toggles ---
-  Widget _buildAppearanceToggles(BuildContext context, SettingsProvider settingsProvider) {
-    return Column(
-      children: [
-        _buildSimpleToggle(
-          context,
-          'Dark Mode',
-          'Enable dark theme',
-          settingsProvider.isDarkModeEnabled,
-          settingsProvider.toggleDarkMode,
-          disabled: true,
-        ),
-        _buildSimpleToggle(
-          context,
-          'Animations',
-          'Enable smooth animations',
-          settingsProvider.isAnimationsEnabled,
-          settingsProvider.toggleAnimations,
-          disabled: true,
-        ),
-        _buildSimpleToggle(
-          context,
-          'Sound Effects',
-          'Enable sound effects',
-          settingsProvider.isSoundEffectsEnabled,
-          settingsProvider.toggleSoundEffects,
-          disabled: true,
         ),
         _buildSimpleToggle(
           context,
@@ -764,12 +679,15 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
+
+
   // --- New Section: Advanced/Experimental Toggles ---
   Widget _buildAdvancedToggles(BuildContext context, SettingsProvider settingsProvider) {
     return Column(
       children: [
         _build5050DetectionToggle(context, settingsProvider),
-        _build5050SafeMoveToggle(context, settingsProvider),
+        if (settingsProvider.is5050DetectionEnabled) _build5050SensitivitySlider(context, settingsProvider),
+        if (settingsProvider.is5050DetectionEnabled) _build5050SafeMoveToggle(context, settingsProvider),
         _buildSimpleToggle(
           context,
           'Debug Probability Mode',
@@ -777,30 +695,6 @@ class SettingsPage extends StatelessWidget {
           settingsProvider.isDebugProbabilityModeEnabled,
           settingsProvider.toggleDebugProbabilityMode,
           disabled: false,
-        ),
-        _buildSimpleToggle(
-          context,
-          'ML Assistance',
-          'Enable machine learning assistance',
-          settingsProvider.isMLAssistanceEnabled,
-          settingsProvider.toggleMLAssistance,
-          disabled: true,
-        ),
-        _buildSimpleToggle(
-          context,
-          'Auto-Play',
-          'Automatically play the game',
-          settingsProvider.isAutoPlayEnabled,
-          settingsProvider.toggleAutoPlay,
-          disabled: true,
-        ),
-        _buildSimpleToggle(
-          context,
-          'Difficulty Prediction',
-          'Predict difficulty using AI',
-          settingsProvider.isDifficultyPredictionEnabled,
-          settingsProvider.toggleDifficultyPrediction,
-          disabled: true,
         ),
       ],
     );
@@ -853,6 +747,74 @@ class SettingsPage extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _build5050SensitivitySlider(BuildContext context, SettingsProvider settingsProvider) {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  '50/50 Detection Sensitivity',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Tooltip(
+                  message: 'Controls how strict the 50/50 detection is. Lower values are more strict (fewer detections), higher values are more lenient (more detections).',
+                  child: Icon(
+                    Icons.help_outline,
+                    size: 16,
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Range: ${((0.5 - settingsProvider.fiftyFiftySensitivity) * 100).round()}% - ${((0.5 + settingsProvider.fiftyFiftySensitivity) * 100).round()}%',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Slider(
+              value: settingsProvider.fiftyFiftySensitivity,
+              min: 0.05, // 45-55%
+              max: 0.2,  // 30-70%
+              divisions: 15, // 15 steps
+              onChanged: (value) {
+                settingsProvider.updateFiftyFiftySensitivity(value);
+              },
+              activeColor: Theme.of(context).colorScheme.primary,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Strict (45-55%)',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+                Text(
+                  'Lenient (30-70%)',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

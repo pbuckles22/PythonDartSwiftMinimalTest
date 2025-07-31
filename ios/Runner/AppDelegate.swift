@@ -37,8 +37,11 @@ import Flutter
           return
         }
         
-        print("🔔 Swift: About to call PythonMinimalRunner.find5050Situations()")
-        let value = PythonMinimalRunner.find5050Situations(inputData: inputData)
+        // Get sensitivity parameter (default to 0.1 if not provided)
+        let sensitivity = args["sensitivity"] as? Double ?? 0.1
+        
+        print("🔔 Swift: About to call PythonMinimalRunner.find5050Situations() with sensitivity: \(sensitivity)")
+        let value = PythonMinimalRunner.find5050Situations(inputData: inputData, sensitivity: sensitivity)
         print("🔔 Swift: PythonMinimalRunner returned: \(String(describing: value))")
         print("🔔 Swift: Sending 50/50 result back to Flutter: \(value)")
         result(value)

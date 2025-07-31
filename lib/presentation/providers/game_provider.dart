@@ -286,11 +286,22 @@ class GameProvider extends ChangeNotifier {
     }
     
     try {
-      print('🔍 GameProvider: Calling Native5050Solver.find5050()');
+      print('🔍 GameProvider: Calling Native5050Solver.find5050() with sensitivity: ${FeatureFlags.fiftyFiftySensitivity}');
       print('🔍 GameProvider: Sending ${probabilityMap.length} cells to Python: $probabilityMap');
-      final newFiftyFiftyCells = await Native5050Solver.find5050(probabilityMap);
-      print('🔍 GameProvider: Python returned ${newFiftyFiftyCells.length} 50/50 cells: $newFiftyFiftyCells');
-      print('🔍 GameProvider: Setting _fiftyFiftyCells to: $newFiftyFiftyCells');
+      final rawPythonResults = await Native5050Solver.find5050(probabilityMap, sensitivity: FeatureFlags.fiftyFiftySensitivity);
+      print('🔍 GameProvider: Python returned ${rawPythonResults.length} 50/50 cells: $rawPythonResults');
+      
+      // Convert Python results to our format
+      final rawPythonCells = <List<int>>[];
+      for (final result in rawPythonResults) {
+        if (result.length == 2) {
+          rawPythonCells.add([result[0], result[1]]);
+        }
+      }
+      
+      // Validate Python results against board state to find true 50/50 pairs
+      final newFiftyFiftyCells = _validatePython5050Results(rawPythonCells);
+      print('🔍 GameProvider: After validation: ${newFiftyFiftyCells.length} true 50/50 cells: $newFiftyFiftyCells');
       
       // Only update and notify if the 50/50 cells actually changed
       bool hasChanged = _fiftyFiftyCells.length != newFiftyFiftyCells.length;
@@ -347,6 +358,7 @@ class GameProvider extends ChangeNotifier {
   }
 
   /// Calculate probability for a cell based on adjacent revealed numbers
+  /// Returns raw probability - Python will handle 50/50 detection
   double _calculateCellProbability(int row, int col) {
     // Get all revealed neighbors of this cell
     final revealedNeighbors = _getRevealedNeighbors(row, col);
@@ -355,7 +367,7 @@ class GameProvider extends ChangeNotifier {
       return 0.0; // No revealed neighbors, can't calculate probability
     }
     
-    // For each revealed neighbor, calculate the probability contribution
+    // Calculate normal probability from all revealed neighbors
     double totalProbability = 0.0;
     int contributingNeighbors = 0;
     
@@ -389,97 +401,98 @@ class GameProvider extends ChangeNotifier {
     return totalProbability / contributingNeighbors;
   }
 
-  /// Find true 50/50 pairs from a probability map
-  List<List<int>> _findTrue5050Pairs(Map<String, double> probabilityMap) {
-    final true5050Cells = <List<int>>[];
+  /// Validate Python 50/50 results against board state to find true 50/50 pairs
+  List<List<int>> _validatePython5050Results(List<List<int>> pythonResults) {
+    final validatedCells = <List<int>>[];
     
-    // Find all cells with approximately 50% probability
-    final fiftyPercentCells = <List<int>>[];
-    for (final entry in probabilityMap.entries) {
-      final key = entry.key;
-      final probability = entry.value;
-      
-      if ((probability - 0.5).abs() < 0.01) { // Close to 50%
-        // Parse cell coordinates
-        final cleanKey = key.replaceAll('(', '').replaceAll(')', '');
-        final parts = cleanKey.split(', ');
-        final row = int.parse(parts[0]);
-        final col = int.parse(parts[1]);
-        fiftyPercentCells.add([row, col]);
+    print('🔍 GameProvider: Validating ${pythonResults.length} Python 50/50 cells against board state');
+    
+    // Group cells into potential pairs (every 2 cells)
+    for (int i = 0; i < pythonResults.length; i += 2) {
+      if (i + 1 < pythonResults.length) {
+        final cell1 = pythonResults[i];
+        final cell2 = pythonResults[i + 1];
+        
+        if (_isValid5050Pair(cell1[0], cell1[1], cell2[0], cell2[1])) {
+          print('🔍 GameProvider: Validated 50/50 pair: (${cell1[0]}, ${cell1[1]}) and (${cell2[0]}, ${cell2[1]})');
+          validatedCells.add(cell1);
+          validatedCells.add(cell2);
+        } else {
+          print('🔍 GameProvider: Rejected invalid 50/50 pair: (${cell1[0]}, ${cell1[1]}) and (${cell2[0]}, ${cell2[1]})');
+        }
       }
     }
     
-    print('🔍 DEBUG: Found ${fiftyPercentCells.length} cells with ~50% probability');
+    print('🔍 GameProvider: Validation complete: ${validatedCells.length} cells in ${validatedCells.length ~/ 2} pairs');
+    return validatedCells;
+  }
+  
+  /// Check if two cells form a valid 50/50 pair (more lenient validation)
+  bool _isValid5050Pair(int row1, int col1, int row2, int col2) {
+    // First check if the cells are side-adjacent to each other
+    final rowDiff = (row1 - row2).abs();
+    final colDiff = (col1 - col2).abs();
     
-    // For each 50% cell, check if it's part of a true 50/50 pair
-    for (final cell in fiftyPercentCells) {
-      final row = cell[0];
-      final col = cell[1];
-      
-      // Get revealed neighbors of this cell
-      final revealedNeighbors = _getRevealedNeighbors(row, col);
-      
-      for (final neighbor in revealedNeighbors) {
-        final neighborRow = neighbor[0];
-        final neighborCol = neighbor[1];
-        final neighborCell = _gameState!.getCell(neighborRow, neighborCol);
-        
-        if (neighborCell.isRevealed && neighborCell.bombsAround > 0) {
-          // Get unrevealed neighbors of this revealed cell
-          final unrevealedNeighbors = _getUnrevealedNeighbors(neighborRow, neighborCol);
-          final flaggedNeighbors = _getFlaggedNeighbors(neighborRow, neighborCol);
+    if (!((rowDiff == 0 && colDiff == 1) || (rowDiff == 1 && colDiff == 0))) {
+      print('🔍 GameProvider: Cells (${row1}, ${col1}) and (${row2}, ${col2}) are not side-adjacent');
+      return false;
+    }
+    
+    // Check if both cells are unrevealed and unflagged
+    final cell1 = _gameState!.getCell(row1, col1);
+    final cell2 = _gameState!.getCell(row2, col2);
+    
+    if (!cell1.isUnrevealed || cell1.isFlagged || !cell2.isUnrevealed || cell2.isFlagged) {
+      print('🔍 GameProvider: One or both cells are not unrevealed/unflagged');
+      return false;
+    }
+    
+    // Find shared revealed neighbors (cells that are adjacent to both)
+    final neighbors1 = _getRevealedNeighbors(row1, col1);
+    final neighbors2 = _getRevealedNeighbors(row2, col2);
+    
+    for (final neighbor1 in neighbors1) {
+      for (final neighbor2 in neighbors2) {
+        if (neighbor1[0] == neighbor2[0] && neighbor1[1] == neighbor2[1]) {
+          // Found a shared revealed neighbor
+          final neighborRow = neighbor1[0];
+          final neighborCol = neighbor1[1];
+          final neighborCell = _gameState!.getCell(neighborRow, neighborCol);
           
-          // Check if this revealed cell needs exactly 1 more mine and has exactly 2 unrevealed neighbors
-          final remainingMines = neighborCell.bombsAround - flaggedNeighbors.length;
-          
-          if (unrevealedNeighbors.length == 2 && remainingMines == 1) {
-            // Check if both unrevealed neighbors are in our 50% list
-            bool bothAre5050 = true;
-            List<int> otherCell = [-1, -1];
+          if (neighborCell.isRevealed && neighborCell.bombsAround > 0) {
+            // Get unrevealed neighbors of this revealed cell
+            final unrevealedNeighbors = _getUnrevealedNeighbors(neighborRow, neighborCol);
+            final flaggedNeighbors = _getFlaggedNeighbors(neighborRow, neighborCol);
             
-            for (final unrevealed in unrevealedNeighbors) {
-              if (unrevealed[0] == row && unrevealed[1] == col) {
-                // This is our current cell
-                continue;
-              } else {
-                otherCell = unrevealed;
-                // Check if the other cell also has ~50% probability
-                final otherKey = '(${otherCell[0]}, ${otherCell[1]})';
-                final otherProbability = probabilityMap[otherKey];
-                if (otherProbability == null || (otherProbability - 0.5).abs() >= 0.01) {
-                  bothAre5050 = false;
-                  break;
+            // Check if this revealed cell needs exactly 1 more mine and has exactly 2 unrevealed neighbors
+            final remainingMines = neighborCell.bombsAround - flaggedNeighbors.length;
+            
+            if (unrevealedNeighbors.length == 2 && remainingMines == 1) {
+              // Check if both unrevealed neighbors are our two cells
+              bool bothCellsPresent = false;
+              bool otherCellsPresent = false;
+              
+              for (final unrevealed in unrevealedNeighbors) {
+                if ((unrevealed[0] == row1 && unrevealed[1] == col1) ||
+                    (unrevealed[0] == row2 && unrevealed[1] == col2)) {
+                  bothCellsPresent = true;
+                } else {
+                  otherCellsPresent = true;
                 }
               }
-            }
-            
-            if (bothAre5050 && otherCell[0] != -1) {
-              print('🔍 DEBUG: Found true 50/50 pair: ($row, $col) and (${otherCell[0]}, ${otherCell[1]})');
-              true5050Cells.add(cell);
-              true5050Cells.add(otherCell);
-              break; // Found a pair for this cell, move to next
+              
+              if (bothCellsPresent && !otherCellsPresent) {
+                print('🔍 GameProvider: Valid 50/50 confirmed: cells (${row1}, ${col1}) and (${row2}, ${col2}) share revealed neighbor (${neighborRow}, ${neighborCol}) with value ${neighborCell.bombsAround}');
+                return true;
+              }
             }
           }
         }
       }
     }
     
-    // Remove duplicates
-    final uniqueCells = <List<int>>[];
-    for (final cell in true5050Cells) {
-      bool isDuplicate = false;
-      for (final existing in uniqueCells) {
-        if (existing[0] == cell[0] && existing[1] == cell[1]) {
-          isDuplicate = true;
-          break;
-        }
-      }
-      if (!isDuplicate) {
-        uniqueCells.add(cell);
-      }
-    }
-    
-    return uniqueCells;
+    print('🔍 GameProvider: No shared revealed neighbor found for cells (${row1}, ${col1}) and (${row2}, ${col2})');
+    return false;
   }
 
   /// Check if a cell is part of a true 50/50 situation (exactly 2 cells with 0.5 probability)
@@ -895,7 +908,21 @@ class GameProvider extends ChangeNotifier {
       if (!_logged5050Cells.contains(cellKey)) {
         _logged5050Cells.add(cellKey);
         final cell = _gameState!.getCell(row, col);
-        print('🎯 50/50 DEBUG: Cell ($row, $col) is 50/50 cell with bomb: ${cell.hasBomb}');
+        
+        // Find the other cell in this 50/50 pair for better debug output
+        List<int>? otherCell;
+        for (List<int> fiftyFiftyCell in _fiftyFiftyCells) {
+          if (fiftyFiftyCell[0] != row || fiftyFiftyCell[1] != col) {
+            otherCell = fiftyFiftyCell;
+            break;
+          }
+        }
+        
+        if (otherCell != null) {
+          print('🎯 50/50 PAIR: [($row, $col), (${otherCell[0]}, ${otherCell[1]})] - Cell ($row, $col) has bomb: ${cell.hasBomb}');
+        } else {
+          print('🎯 50/50 SINGLE: Cell ($row, $col) has bomb: ${cell.hasBomb}');
+        }
       }
     }
     return is5050;
